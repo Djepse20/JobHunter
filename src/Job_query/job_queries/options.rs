@@ -1,8 +1,14 @@
-use crate::Job_query::job_queries::JobTags;
+use crate::Job_query::job_queries::{JobFetchers, JobTags, database::DataBase};
 
 pub struct FetchOptions {
     pub query_options: QueryOptions,
     pub size_options: SizeOptions,
+}
+
+pub enum DataBaseOptions {
+    QuerySites(Vec<JobFetchers>),
+    QueryEveryThing,
+    QueryOnlyDb,
 }
 
 impl FetchOptions {
