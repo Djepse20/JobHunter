@@ -23,8 +23,8 @@ impl FetchOptions {
 pub enum QueryOptions {
     Query {
         job_name: Option<String>,
-        job_regions: Option<Vec<String>>,
-        job_tags: Option<JobTags>,
+        job_regions: Vec<String>,
+        job_tags: Vec<String>,
     },
     All,
 }

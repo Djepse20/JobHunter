@@ -101,7 +101,7 @@ impl JobIndex {
             } => {
                 let mut string: Option<String> = None;
 
-                if let Some(regions) = job_regions {
+                if let regions @ [_, ..] = job_regions.as_slice() {
                     let region_query = JobIndex::get_region_query(regions).await;
                     string.get_or_insert_with(|| String::new()).push_str(&region_query);
                 }
