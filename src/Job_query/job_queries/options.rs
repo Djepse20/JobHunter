@@ -25,6 +25,7 @@ pub enum QueryOptions {
         job_name: Option<String>,
         job_regions: Vec<String>,
         job_tags: Vec<String>,
+        filter_applied_jobs: bool,
     },
     All,
 }
