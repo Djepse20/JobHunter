@@ -1,4 +1,4 @@
-use crate::Job_query::job_queries::{JobFetchers, JobTags, database::DataBase};
+use crate::Job_query::job_queries::{JobFetchers, database::DataBase};
 
 pub struct FetchOptions {
     pub query_options: QueryOptions,
