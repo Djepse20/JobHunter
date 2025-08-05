@@ -1,0 +1,21 @@
+                             
+                                curl 'https://www.linkedin.com/voyager/api/jobs/jobPostings/4273709865?decorationId=com.linkedin.voyager.deco.jobs.web.shared.WebFullJobPosting-65&topN=1&topNRequestedFlavors=List(TOP_APPLICANT,IN_NETWORK,COMPANY_RECRUIT,SCHOOL_RECRUIT,HIDDEN_GEM,ACTIVELY_HIRING_COMPANY)' \
+                                --compressed \
+                                -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0' \
+                                -H 'Accept: application/vnd.linkedin.normalized+json+2.1' \
+                                -H 'Accept-Language: da,en-US;q=0.7,en;q=0.3' \
+                                -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+                                -H 'x-li-lang: da_DK' \
+                                -H 'x-li-track: {"clientVersion":"1.13.37589","mpVersion":"1.13.37589","osName":"web","timezoneOffset":2,"timezone":"Europe/Copenhagen","deviceFormFactor":"DESKTOP","mpName":"voyager-web","displayDensity":1.5,"displayWidth":2239.5,"displayHeight":1399.5}' \
+                                -H 'x-li-page-instance: urn:li:page:d_flagship3_search_srp_jobs;punakMfiQg6KnJn/h3GxnA==' \
+                                -H 'csrf-token: ajax:0022484399462082125' \
+                                -H 'x-restli-protocol-version: 2.0.0' \
+                                -H 'x-li-pem-metadata: Voyager - Careers - Apply=jobs-easy-apply' \
+                                -H 'Alt-Used: www.linkedin.com' \
+                                -H 'Connection: keep-alive' \
+                                -H 'Referer: https://www.linkedin.com/jobs/search/?currentJobId=4260054965&f_AL=true&f_PP=107956996%2C100951797%2C100658507&geoId=104514075&keywords=softwareudvikler&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refresh=true&sortBy=R' \
+                                -H 'Cookie:     JSESSIONID="ajax:0022484399462082125";       lang=v=2&lang=da-dk; li_at=/*replace with fake account */; liap=true' \
+                                -H 'Sec-Fetch-Dest: empty' \
+                                -H 'Sec-Fetch-Mode: cors' \
+                                -H 'Sec-Fetch-Site: same-origin' \
+                                -H 'TE: trailers'
