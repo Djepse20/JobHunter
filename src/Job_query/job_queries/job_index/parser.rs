@@ -63,16 +63,9 @@ impl Parser {
                     }
 
                     if end_j == N2 {
-                        let remove = N2;
-                        if remove > 0 {
-                            if output.len() >= remove {
-                                output.truncate(output.len() - remove);
-                            } else {
-                                output.clear();
-                            }
-                        }
+                        output.truncate(output.len().saturating_sub(N2));
+
                         output.shrink_to_fit();
-                        assert_eq!(output.capacity(), bytes_taken);
 
                         return String::from_utf8(output).ok();
                     }
