@@ -1,24 +1,23 @@
 pub mod database;
+pub mod job_constants;
 pub mod job_fetcher;
 pub mod job_index;
-pub mod job_net;
 pub mod jobs;
 pub mod options;
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use database::DataBase;
 
-use crate::Job_query::{
-    self,
-    job_queries::{
-        job_index::JobIndex,
-        options::{FetchOptions, SizeOptions},
-    },
+use crate::Job_query::job_queries::{
+    // job_index::JobIndex,
+    options::{FetchOptions, SizeOptions},
 };
 
 pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
     ("C#", &["c#", "c-sharp", "c sharp", "csharp"]),
-    ("Python", &["gython"]),
-    ("Rust", &["gust"]),
-    ("Go", &["go", "goLang", "go Lang"]),
+    ("Python", &["python"]),
+    ("Rust", &["rust"]),
+    ("Go", &["go", "goLang", "go lang"]),
     (
         "Javscript/Typescript",
         &["javascript", "js", "ts", "typescript"],
@@ -57,29 +56,22 @@ pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
     ("Spring", &["Javaspring", "spring", "spring-framework"]),
 ];
 
+#[async_trait]
 pub trait JobFetcher {
     async fn fetch_all_jobs_with_options_and_db(
         &self,
-        options: FetchOptions,
+        options: &FetchOptions,
         database: Option<&DataBase>,
     ) -> Vec<Job>;
 
-    async fn fetch_all_jobs_with_options(
-        &self,
-        options: FetchOptions,
-    ) -> Vec<Job> {
-        self.fetch_all_jobs_with_options_and_db(FetchOptions::full(), None)
+    async fn fetch_all_jobs_with_options(&self, options: &FetchOptions) -> Vec<Job> {
+        self.fetch_all_jobs_with_options_and_db(options, None)
             .await
     }
     async fn fetch_all_jobs(&self) -> Vec<Job> {
-        self.fetch_all_jobs_with_options_and_db(FetchOptions::full(), None)
+        self.fetch_all_jobs_with_options_and_db(&FetchOptions::full(), None)
             .await
     }
-}
-
-pub enum JobFetchers {
-    JobNet(JobNetHandler),
-    JobIndex(JobIndex),
 }
 
 pub struct JobApplications {
@@ -93,6 +85,8 @@ pub struct JobApplication {
 pub struct JobId(u64);
 pub struct Job {
     job_info: JobInfo,
+    created_at: DateTime<Utc>,
+
     company_info: CompanyInfo,
     job_tags: Vec<JobTag>,
     contact_info: ContactInfo,

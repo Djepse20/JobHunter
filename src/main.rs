@@ -1,523 +1,174 @@
-use core::panic;
-use std::{
-    fmt::{Debug, Display},
-    iter::{self, Chain, Once, Peekable},
-    marker::PhantomData,
-    ops::Deref,
-    ptr::NonNull,
-    slice,
-    str::{CharIndices, Chars},
-    time::Instant,
-};
+pub mod Job_query;
 
-use futures::io::empty;
+use std::cell::Cell;
+use std::cmp::Reverse;
+use std::collections::{BTreeMap, BTreeSet};
+use std::io::BufReader;
+use std::marker::PhantomData;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::sync::Arc;
+use std::{default, fmt};
+
+use axum::{Router, routing::get};
+use futures::channel;
+use futures::io::Read;
+use serde::de::{self, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::map::Iter;
-#[derive(Clone, Copy)]
-struct Solution;
 
-struct Stack<T> {
-    root: Option<Box<Node<T>>>,
+use crate::Job_query::job_queries::Job;
+use crate::Job_query::job_queries::database::DataBase;
+use crate::Job_query::job_queries::job_index::JobIndex;
+use crate::Job_query::job_queries::jobs::Jobs;
+use crate::Job_query::job_queries::options::FetchOptions;
+use axum_extra::extract::Query;
+use std::net::SocketAddr;
+
+use Job_query::job_queries::jobs;
+use axum::extract::{FromRequestParts, State};
+use axum::{extract::FromRequest, http::StatusCode, response::IntoResponse};
+use axum_extra::extract::QueryRejection;
+use serde::Serialize;
+use serde_json::value::RawValue;
+use serde_json::{Value, json};
+
+#[axum::debug_handler]
+async fn fetch_jobs(
+    fetch_options: FetchOptions,
+    job_service: State<Arc<Jobs>>,
+) -> impl IntoResponse {
+    job_service
+        .fetch_jobs(fetch_options)
+        .await;
+
+    // ...
 }
 
-struct Node<T> {
-    val: T,
-    next: Option<Box<Node<T>>>,
-}
-impl<T> Node<T> {
-    pub fn new(val: T) -> Self {
-        Node {
-            val: val,
-            next: None,
-        }
-    }
-}
+// Define a non-Copy struct
+// struct NonCopyData {
+//     value: String,
+// }
 
-impl<T> Stack<T> {
-    fn new(val: T) -> Self {
-        Stack {
-            root: Some(Box::new(Node::new(val))),
-        }
-    }
-    fn empty() -> Self {
-        Stack { root: None }
-    }
+// // Implement FnOnceS for NonCopyData
+// impl FnOnceS for NonCopyData {
+//     fn call_once(self) {
+//         println!("Called with: {}", self.value);
+//     }
+// }
 
-    fn push(&mut self, val: T) {
-        let mut new_node = Node::new(val);
+use tokio::sync::mpsc::{self, Sender, UnboundedReceiver, UnboundedSender};
 
-        new_node.next = self.root.take();
-
-        self.root = Some(Box::new(new_node));
-    }
-
-    fn pop(&mut self) -> Option<T> {
-        let mut root = self.root.take()?;
-        self.root = root.next.take();
-
-        Some(root.val)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.root.is_none()
-    }
-}
-
-struct StackIter<'a, T> {
-    curr: Option<&'a Node<T>>,
-}
-
-struct StackIterMut<'a, T> {
-    curr: Option<*mut Node<T>>,
-    life_time: PhantomData<&'a ()>,
-}
-
-impl<'a, T: 'a> IntoIterator for &'a mut Stack<T> {
-    type Item = &'a mut T;
-    type IntoIter = StackIterMut<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        let mut stack_iter = StackIterMut {
-            curr: None,
-            life_time: PhantomData,
-        };
-
-        stack_iter.curr =
-            self.root.as_deref_mut().map(|val| &mut *val as *mut _);
-
-        stack_iter
-    }
-}
-
-impl<'a, T: 'a> Iterator for StackIterMut<'a, T> {
-    type Item = &'a mut T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.curr.map(|node| {
-            let node: &mut Node<T> = unsafe { &mut *node };
-            self.curr = node.next.as_deref_mut().map(|val| &mut *val as *mut _);
-            &mut node.val
-        })
-    }
-}
-
-impl<'a, T: 'a> IntoIterator for &'a Stack<T> {
-    type Item = &'a T;
-    type IntoIter = StackIter<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        StackIter {
-            curr: self.root.as_deref().map(|val| &*val),
-        }
-    }
-}
-
-impl<'a, T: 'a> Iterator for StackIter<'a, T> {
-    type Item = &'a T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.curr.map(|node| {
-            self.curr = node.next.as_deref();
-            &node.val
-        })
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Token<'a> {
-    Let,
-    Identifier(&'a str),
-    Number(&'a str),
-    String(&'a str),
-    Func,
-    Return,
-    Comma,
-    Period,
-    Mod,
-    // Symbols
-    Equal,
-    Equiv,
-    Nequiv,
-    Leq,
-    Semicolon,
-    Colon,
-    ParensLeft,
-    ParensRight,
-    SquareLeft,
-    SquareRight,
-    CurlyLeft,
-    CurlyRight,
-    Ampersand,
-    Pipe,
-    Exclamation,
-    LessThan,
-    GreaterThan,
-    // Flow
-    If,
-    Else,
-    // Loops
-    While,
-    For,
-    // Arithmetic
-    Add,
-    Sub,
-    Mult,
-    Div,
-    EOF,
-    // Booleans
-    True,
-    False,
-    // Types
-    Int,
-    Bool,
-    Unit,
-    // Logic
-    And,
-}
 #[derive(Debug)]
-pub struct Lexer<'a> {
-    source_code: &'a str,
-    tokens: [Option<Token<'a>>; 2],
-    chars: Peekable<Chain<CharIndices<'a>, Once<(usize, char)>>>,
-}
+pub struct MyData;
 
-impl<'a> Lexer<'a> {
-    pub fn new(source_code: &'a str) -> Lexer<'a> {
-        let mut lexer = Lexer {
-            chars: source_code
-                .char_indices()
-                .chain(iter::once((source_code.len(), '\0')))
-                .peekable(),
+impl MyData {
+    pub async fn new<F: Fn(&RawValue) + 'static>(val: String, f: F) -> Self {
+        unsafe impl<T: ?Sized> Send for TrustMeBro<T> {}
+        unsafe impl<T: ?Sized> Sync for TrustMeBro<T> {}
+        struct TrustMeBro<T: ?Sized>(*const T);
 
-            tokens: [None; 2],
-            source_code: &source_code[..],
-        };
+        impl<'de, T: 'de + ?Sized> Deserialize<'de> for TrustMeBro<T>
+        where
+            &'de T: Deserialize<'de>,
+        {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let raw_val = <&T>::deserialize(deserializer)?;
+                Ok(TrustMeBro(raw_val as *const T))
+            }
+        }
 
-        lexer.tokens[0] = lexer.next_token();
-        lexer.tokens[1] = lexer.next_token();
-        lexer
-    }
-}
+        impl<'de, T: ?Sized> AsRef<T> for TrustMeBro<T> {
+            fn as_ref(&self) -> &T {
+                unsafe { &*self.0 }
+            }
+        }
+        struct SenderVisitor<'de> {
+            tx: UnboundedSender<TrustMeBro<RawValue>>,
+            _life_time: PhantomData<&'de ()>,
+        }
+        let pinned: Pin<Box<str>> = val.into_boxed_str().into();
 
-impl<'a> Lexer<'a> {
-    pub fn current_token(&mut self) -> Option<Token<'a>> {
-        self.tokens[0]
-    }
+        impl<'de> Visitor<'de> for SenderVisitor<'de> {
+            type Value = ();
 
-    pub fn peek_next_token(&self) -> Option<Token<'a>> {
-        self.tokens[1]
-    }
-}
-
-impl<'a> Lexer<'a> {
-    pub fn next_token(&mut self) -> Option<Token<'a>> {
-        while let Some((idx, ch)) = self.chars.next() {
-            if idx == self.source_code.len() {
-                return Some(Token::EOF);
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a JSON array")
             }
 
-            let tok = match ch {
-                ' ' | '\n' => continue,
-                ';' => Some(Token::Semicolon),
-                ',' => Some(Token::Comma),
-                '.' => Some(Token::Period),
-                '+' => Some(Token::Add),
-                '-' => Some(Token::Sub),
-                '*' => Some(Token::Mult),
-                '/' => Some(Token::Div),
-                '(' => Some(Token::ParensLeft),
-                ')' => Some(Token::ParensRight),
-                '[' => Some(Token::SquareLeft),
-                ']' => Some(Token::SquareRight),
-                '{' => Some(Token::CurlyLeft),
-                '}' => Some(Token::CurlyRight),
-                '|' => Some(Token::Pipe),
-                '>' => Some(Token::GreaterThan),
-                '%' => Some(Token::Mod),
-                ':' => Some(Token::Colon),
-                '<' => {
-                    if self.chars.next_if(|(_, c)| *c == '=').is_some() {
-                        Some(Token::Leq)
-                    } else {
-                        Some(Token::LessThan)
-                    }
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                // Specify the element type so the compiler can infer it.
+                while let Ok(Some(val)) = seq.next_element::<TrustMeBro<RawValue>>() {
+                    // Ignore send errors (e.g., receiver dropped).
+                    let _ = self.tx.send(val);
                 }
-                '&' => {
-                    if self.chars.next_if(|(_, c)| *c == '&').is_some() {
-                        Some(Token::And)
-                    } else {
-                        Some(Token::Ampersand)
-                    }
-                }
-                '=' => {
-                    if self.chars.next_if(|(_, c)| *c == '=').is_some() {
-                        Some(Token::Equiv)
-                    } else {
-                        Some(Token::Equal)
-                    }
-                }
-                '!' => {
-                    if self.chars.next_if(|(_, c)| *c == '=').is_some() {
-                        Some(Token::Nequiv)
-                    } else {
-                        Some(Token::Exclamation)
-                    }
-                }
-                '"' => match self.chars.position(|(_, ch)| ch == '"') {
-                    Some(pos) => {
-                        let tok = Some(Token::String(
-                            &self.source_code[idx + 1..idx + pos],
-                        ));
-                        tok
-                    }
-                    None => {
-                        panic!("expected \", did not find ");
-                    }
-                },
-
-                x if x.is_alphabetic() => {
-                    let mut pos = idx + x.len_utf8();
-
-                    while let Some((_, ch)) = self
-                        .chars
-                        .next_if(|(_, c)| c.is_alphanumeric() || *c == '_')
-                    {
-                        pos += ch.len_utf8();
-                    }
-                    let str = &self.source_code[idx..pos];
-
-                    match str {
-                        "let" => Some(Token::Let),
-                        "if" => Some(Token::If),
-                        "else" => Some(Token::Else),
-                        "for" => Some(Token::For),
-                        "while" => Some(Token::While),
-                        "true" => Some(Token::True),
-                        "false" => Some(Token::False),
-                        "func" => Some(Token::Func),
-                        "return" => Some(Token::Return),
-                        "Unit" => Some(Token::Unit),
-                        "Int" => Some(Token::Int),
-                        "Bool" => Some(Token::Bool),
-                        str => Some(Token::Identifier(str)),
-                    }
-                }
-                x if x.is_numeric() => {
-                    let mut pos = idx + x.len_utf8();
-                    while let Some((_, ch)) =
-                        self.chars.next_if(|(_, c)| c.is_numeric())
-                    {
-                        pos += ch.len_utf8();
-                    }
-
-                    let tok = Some(Token::Number(&self.source_code[idx..pos]));
-                    tok
-                }
-                _ => panic!("Unknown character"),
-            };
-            return tok;
-        }
-        None
-    }
-}
-
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let tok = self.next_token();
-        let token = self.tokens[0];
-        self.tokens[0] = self.tokens[1];
-        self.tokens[1] = tok;
-
-        token
-    }
-}
-
-// impl<'a> Iterator for Lexer<'a>
-// where
-//     for<'b> Lexer<'a>: 'b,
-// {
-//     type Item = Token<'a>;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.tokens[0]
-//     }
-// }
-
-// impl Solution {
-//     pub fn is_valid(s: String) -> bool {
-//         let mut stack = Stack::empty();
-//         let matching_char = |(_,c)| match c {
-//             ')' => '(',
-//             ']' => '[',
-//             '}' => '{',
-//             _ => panic!("not possible"),
-//         };
-//         for ch in s.chars() {
-//             match ch {
-//                 '(' | '[' | '{' => {
-//                     stack.push(ch);
-//                 }
-//                 ch => {
-//                     if let Some(c) = stack.pop()
-//                         && c == matching_char(ch)
-//                     {
-//                         continue;
-//                     } else {
-//                         return false;
-//                     }
-//                 }
-//             }
-//         }
-
-//         stack.is_empty()
-//     }
-// }
-
-impl Solution {
-    pub fn is_valid(s: String) -> bool {
-        let iter = &mut s.chars().peekable();
-
-        Self::is_valid_req(iter, None) && iter.next().is_none()
-    }
-
-    fn matching_char(ch: char) -> char {
-        match ch {
-            ')' => '(',
-            ']' => '[',
-            '}' => '{',
-            _ => panic!("not possible"),
-        }
-    }
-
-    pub fn is_valid_req(
-        chars: &'_ mut Peekable<Chars<'_>>,
-        prev_open: Option<char>,
-    ) -> bool {
-        let valid = loop {
-            match chars.next() {
-                Some(open @ ('(' | '[' | '{')) => {
-                    println!("opening: {open}");
-
-                    let valid = Self::is_valid_req(chars, Some(open));
-
-                    match (valid, chars.peek(), prev_open) {
-                        (true, Some(_), _) => {
-                            continue;
-                        }
-
-                        (true, None, Some(_)) => {
-                            break false;
-                        }
-                        (true, None, None) => {
-                            break true;
-                        }
-
-                        _ => break false,
-                    }
-                }
-                Some(close) => {
-                    break prev_open.is_some_and(|prev_open| {
-                        Self::matching_char(close) == prev_open
-                    });
-                }
-
-                _ => break false,
+                Ok(())
             }
+        }
+
+        let (tx, mut rx) = mpsc::unbounded_channel::<TrustMeBro<RawValue>>();
+        let ptr = TrustMeBro(pinned.as_ref().get_ref() as *const str);
+
+        // ⚠️ Still unsafe: you're extending `val` across a 'static task via a raw pointer.
+        let handle = unsafe {
+            tokio::spawn(async move {
+                let ptr = ptr;
+
+                // Recreate &str from raw pointer.
+                let s: &str = &*ptr.0;
+
+                // Borrowing deserializer over `s`.
+                let mut de = serde_json::Deserializer::from_str(s);
+
+                let visitor = SenderVisitor {
+                    tx,
+                    _life_time: PhantomData,
+                };
+
+                // Drive the visitor. We ignore the result to keep it simple.
+                let _ = de.deserialize_seq(visitor);
+            })
         };
-        valid
-    }
-}
-
-pub enum Kind {
-    Number,
-    String,
-    Ident,
-}
-
-struct TokenDelux<'a> {
-    src: &'a str,
-    kind: Kind,
-}
-
-fn rand(upper: usize) -> usize {
-    let val = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-    (val << 2) as usize % upper
-}
-
-fn weighted_choice<const N: usize>(
-    elements: &[usize; N],
-    weights: &[usize; N],
-) -> usize {
-    let cum_weights: Vec<usize> = weights
-        .iter()
-        .scan(0_usize, |state, weight| {
-            *state += weight;
-            Some(*state)
-        })
-        .collect();
-    let rand_number = rand(*cum_weights.last().unwrap());
-    for (&element, &weight) in elements.into_iter().zip(&cum_weights) {
-        if rand_number < weight {
-            return element;
+        while let Some(data) = rx.recv().await {
+            unsafe { f(&*data.0) }
         }
-    }
-    panic!("haha")
-}
-
-// 1) The trait
-pub trait Stuffable<T> {
-    fn stuff(&self);
-}
-pub trait Displayable {
-    fn stuff(&self);
-}
-
-impl<T> Displayable for T
-where
-    T: Display,
-{
-    fn stuff(&self) {
-        println!("{}", self);
-    }
-}
-// 3a) If you have a Vec of Display‐able items, just print them:
-impl<T: Displayable> Stuffable<()> for Vec<T> {
-    fn stuff(&self) {
-        for val in self {
-            val.stuff();
-        }
+        handle.await;
+        MyData
     }
 }
 
-impl<T: Stuffable<()>> Stuffable<((), ())> for Vec<T> {
-    fn stuff(&self) {
-        for val in self {
-            val.stuff();
-        }
-    }
-}
-impl<T: Stuffable<((),())>> Stuffable<((),(), ())> for Vec<T> {
-    fn stuff(&self) {
-        for val in self {
-            val.stuff();
-        }
-    }
-}
+#[tokio::main]
+async fn main() {
+    // let parser: ParserHolder<SpecificParser> = serde_json::from_str(&data).unwrap();
 
+    let val = String::from(r#"[{"b":2},{"b":4}]"#);
+    let mut test: &str = &"abc";
+    let mut my_data = MyData::new(val, |raw_value| {
+        println!("{}", raw_value.get());
+    })
+    .await;
 
+    // let service = Arc::new(J);
+    let jobs = Arc::new(
+        Jobs::new()
+            .add_fetcher(JobIndex::new())
+            .add_database(DataBase::new()),
+    );
+    let app = Router::new()
+        .route("/fetch_jobs", get(fetch_jobs))
+        .with_state(jobs);
 
-
-// 3b) If you have a Vec of things that themselves implement Stuffable,
-
-fn main() {
-    // Build a 3D “vector of vectors of vectors of i32”:
-    let vectors = vec![vec![vec![1, 2, 3]]];
-
-    // The call below:
-    // • Innermost: Vec<i32> → prints “1\n2\n3\n” by the first impl
-    // • Next level up: Vec<VectorS<i32>> → calls .stuff() on each
-    // • Top level: Vec<VectorS<VectorS<i32>>> → same again
-    vectors.stuff();
+    // run our app with hyper, listening globally on port
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:")
+        .await
+        .unwrap();
+    axum::serve(listener, app)
+        .await
+        .unwrap();
 }
