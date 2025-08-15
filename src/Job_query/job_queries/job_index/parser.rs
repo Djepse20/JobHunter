@@ -25,8 +25,8 @@ impl Parser {
         let mut start_j = 0;
         let mut end_j = 0;
         let mut started = false;
-
         let mut output: Vec<u8> = Vec::new();
+        let mut bytes_taken = 0;
 
         while let Some(chunk_res) = stream.next().await {
             let chunk = match chunk_res {
@@ -34,8 +34,9 @@ impl Parser {
                 Err(_) => return None,
             };
             let bytes = chunk.as_ref();
+            let mut start = 0;
 
-            for &b in bytes {
+            for (idx, &b) in bytes.iter().enumerate() {
                 if !started {
                     if start_seq[start_j] != b {
                         start_j = 0;
@@ -47,10 +48,12 @@ impl Parser {
                     if start_j == start_seq.len() {
                         started = true;
                         start_j = 0;
+                        start = idx + 1;
                         end_j = 0;
                     }
                 } else {
                     output.push(b);
+                    bytes_taken += 1;
                     if end_seq[end_j] != b {
                         end_j = 0;
                         continue;
@@ -69,6 +72,8 @@ impl Parser {
                             }
                         }
                         output.shrink_to_fit();
+                        assert_eq!(output.capacity(), bytes_taken);
+
                         return String::from_utf8(output).ok();
                     }
                 }
