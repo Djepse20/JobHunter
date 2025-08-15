@@ -52,7 +52,6 @@ impl Parser {
                     }
                 } else {
                     output.push(b);
-                    bytes_taken += 1;
                     if end_seq[end_j] != b {
                         end_j = 0;
                         continue;
