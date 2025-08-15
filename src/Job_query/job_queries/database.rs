@@ -10,10 +10,13 @@ pub struct DataBase {
 }
 
 impl DataBase {
-    pub async fn insert_jobs(
-        &self,
-        jobs: &[Job],
-    ) -> Result<Vec<i64>, sqlx::Error> {
+    pub fn new() -> Self {
+        DataBase { database: todo!() }
+    }
+    pub async fn get_newest_job(&self) -> Result<Job, sqlx::Error> {
+        todo!()
+    }
+    pub async fn insert_jobs(&self, jobs: &[Job]) -> Result<Vec<i64>, sqlx::Error> {
         let mut job_ids: Vec<i64> = Vec::with_capacity(jobs.len());
         // these are assumed to be in the correct order. Ie if any one fails that must mean the next ones will also fail.
 
@@ -31,10 +34,8 @@ impl DataBase {
         let mut tx: Transaction<'_, Postgres> = self.database.begin().await?;
         // if ANY OF THESE FAIL, WE ROLL BACK :)
 
-        let company_id =
-            self.insert_company_info(&job.company_info, &mut tx).await?;
-        let contact_id =
-            self.insert_contact_info(&job.contact_info, &mut tx).await?;
+        let company_id = self.insert_company_info(&job.company_info, &mut tx).await?;
+        let contact_id = self.insert_contact_info(&job.contact_info, &mut tx).await?;
 
         let job_info = &job.job_info;
 
@@ -50,9 +51,7 @@ impl DataBase {
         .fetch_one(&mut *tx)
         .await?;
 
-        let tag_ids = self
-            .insert_job_relations(&job.job_tags, job_id, &mut tx)
-            .await?;
+        let tag_ids = self.insert_job_relations(&job.job_tags, job_id, &mut tx).await?;
 
         tx.commit().await?;
         Ok(job_id)
@@ -106,8 +105,7 @@ impl DataBase {
         job_id: i64,
         tx: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<i64>, sqlx::Error> {
-        let tags: Vec<&str> =
-            job_tags.iter().map(|tag| tag.name.as_str()).collect();
+        let tags: Vec<&str> = job_tags.iter().map(|tag| tag.name.as_str()).collect();
 
         let ids: Vec<i64> = sqlx::query_scalar(
             r#"
