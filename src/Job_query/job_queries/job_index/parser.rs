@@ -26,7 +26,6 @@ impl Parser {
         let mut end_j = 0;
         let mut started = false;
         let mut output: Vec<u8> = Vec::new();
-        let mut bytes_taken = 0;
 
         while let Some(chunk_res) = stream.next().await {
             let chunk = match chunk_res {
