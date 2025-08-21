@@ -67,11 +67,6 @@ use tokio::sync::mpsc::{
 
 use serde_json::value::RawValue;
 
-struct PinnedStr {
-    str: String,
-    pin: PhantomPinned,
-}
-
 #[tokio::main]
 async fn main() {
     let str = String::from(
