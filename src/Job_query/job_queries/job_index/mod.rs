@@ -22,7 +22,9 @@ use url::form_urlencoded::parse;
 
 use crate::Job_query::job_queries::database::DataBase;
 use crate::Job_query::job_queries::options::{FetchOptions, QueryOptions};
-use crate::Job_query::{JobQuery, JobSiteUrl, JobUrl, PortalUrl, job_queries::JobFetcher};
+use crate::Job_query::{
+    JobQuery, JobSiteUrl, JobUrl, PortalUrl, job_queries::JobFetcher,
+};
 use scraper::{Html, Selector, html};
 
 impl JobConstants for JobIndex {
@@ -50,11 +52,7 @@ impl JobIndex {
 
 impl JobIndex {
     async fn get_html(url: &str) -> Option<String> {
-        let mut res = reqwest::Client::new()
-            .get(url)
-            .send()
-            .await
-            .ok()?;
+        let mut res = reqwest::Client::new().get(url).send().await.ok()?;
 
         let len = res.content_length();
 
@@ -72,9 +70,7 @@ async fn parse_job(url: &str) -> Option<Job> {
     let tags = JOB_TAGS
         .iter()
         .filter(|(_, sub_strs)| {
-            sub_strs
-                .iter()
-                .any(|sub_str| job_text.contains(sub_str))
+            sub_strs.iter().any(|sub_str| job_text.contains(sub_str))
         })
         .map(|(tag, _)| tag);
 
@@ -101,7 +97,9 @@ pub fn extract_json_for_page(page: &str) -> Option<impl Iterator<Item = &str>> {
 
     // Now, from results_pos, find the full array string [...] matching brackets
     find_balanced_json_array(&json_str[results_pos..]).map(|(start, end)| {
-        find_outermost_array_slices(&json_str[results_pos + start..results_pos + end])
+        find_outermost_array_slices(
+            &json_str[results_pos + start..results_pos + end],
+        )
     })
 }
 
@@ -185,49 +183,46 @@ impl JobIndex {
         let query = JobIndex::get_query(fetch_options).await;
 
         let total_jobs = JobIndex::total_jobs(&query).await?;
-        let (offset, _, pages) = fetch_options
-            .size_options
-            .job_num_to_query(total_jobs, JobIndex::PAGE_SIZE, 1);
+        let (offset, _, pages) = fetch_options.size_options.job_num_to_query(
+            total_jobs,
+            JobIndex::PAGE_SIZE,
+            1,
+        );
 
-        let base_job_search_url = "https://www.jobindex.dk/jobsoegning?".to_owned();
+        let base_job_search_url =
+            "https://www.jobindex.dk/jobsoegning?".to_owned();
 
         let sorted_query = query.unwrap_or_default() + "&sort=date";
 
         Some((
             offset,
-            pages
-                .into_iter()
-                .map(move |(jobs, page)| {
-                    (
-                        jobs,
-                        base_job_search_url.to_owned()
-                            + &sorted_query
-                            + "&page="
-                            + &page.to_string(),
-                    )
-                }),
+            pages.into_iter().map(move |(jobs, page)| {
+                (
+                    jobs,
+                    base_job_search_url.to_owned()
+                        + &sorted_query
+                        + "&page="
+                        + &page.to_string(),
+                )
+            }),
         ))
     }
     async fn total_jobs(query_str: &Option<String>) -> Option<usize> {
         let query_string = match query_str {
             Some(query) => {
-                String::from("https://www.jobindex.dk/api/jobsearch/v3/jobcount") + query
+                String::from(
+                    "https://www.jobindex.dk/api/jobsearch/v3/jobcount",
+                ) + query
             }
-            None => String::from("https://www.jobindex.dk/api/jobsearch/v3/jobcount"),
+            None => String::from(
+                "https://www.jobindex.dk/api/jobsearch/v3/jobcount",
+            ),
         };
 
-        let res = reqwest::get(&query_string)
-            .await
-            .ok()?
-            .text()
-            .await
-            .ok()?;
-        let json: Value = serde_json::from_str::<serde_json::Value>(&res).ok()?;
-        Some(
-            json.as_object()?
-                .get("hitcount")?
-                .as_u64()? as usize,
-        )
+        let res = reqwest::get(&query_string).await.ok()?.text().await.ok()?;
+        let json: Value =
+            serde_json::from_str::<serde_json::Value>(&res).ok()?;
+        Some(json.as_object()?.get("hitcount")?.as_u64()? as usize)
     }
 
     pub async fn get_query(fetch_options: &FetchOptions) -> Option<String> {
@@ -240,7 +235,8 @@ impl JobIndex {
                 let mut string: Option<String> = None;
 
                 if let regions @ [_, ..] = job_regions.as_slice() {
-                    let region_query = JobIndex::get_region_query(regions).await;
+                    let region_query =
+                        JobIndex::get_region_query(regions).await;
                     string
                         .get_or_insert_with(|| String::new())
                         .push_str(&region_query);
@@ -256,10 +252,13 @@ impl JobIndex {
         }
     }
     pub async fn get_region_query(regions: &[String]) -> String {
-        let regions_stream = stream::iter(regions.iter())
-            .then(|region| async move { JobIndex::take_first_region(&region).await })
-            .filter_map(|val| async move { val })
-            .peekable();
+        let regions_stream =
+            stream::iter(regions.iter())
+                .then(|region| async move {
+                    JobIndex::take_first_region(&region).await
+                })
+                .filter_map(|val| async move { val })
+                .peekable();
         tokio::pin!(regions_stream);
         let mut region_query = String::new();
 
@@ -283,9 +282,7 @@ impl JobIndex {
         let res = reqwest::get(query_string).await.ok()?;
         let json = res.text().await.ok()?;
         let value: serde_json::Value = serde_json::from_str(&json).ok()?;
-        let list = value
-            .get("geoareaid")?
-            .get("completions")?;
+        let list = value.get("geoareaid")?.get("completions")?;
         let job = list.get(0)?;
         let uuid = job.get("id")?.as_str()?;
         Some("geoareaud=".to_owned() + uuid)
@@ -415,13 +412,17 @@ impl<'a> JobIndex {
 
     fn get_job_urls_from_html(
         html: &'a str,
-    ) -> Result<impl IntoIterator<Item = Reverse<JobIntermediateWithString<'a, JobIndex>>>, ()>
-    {
+    ) -> Result<
+        impl IntoIterator<Item = Reverse<JobIntermediateWithString<'a, JobIndex>>>,
+        (),
+    > {
         let mut jobs = extract_json_for_page(&html).ok_or(())?;
 
         Ok(jobs
             .into_iter()
-            .filter_map(|job: &str| JobIntermediateWithString::try_from(job).ok())
+            .filter_map(|job: &str| {
+                JobIntermediateWithString::try_from(job).ok()
+            })
             .map(|val| Reverse(val)))
     }
 }
