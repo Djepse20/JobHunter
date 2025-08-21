@@ -1539,8 +1539,9 @@ macro_rules! check_recursion {
 
         $this $($body)*
 
+        if_checking_recursion_limit! {
             $this.remaining_depth += 1;
-
+        }
     };
 }
 
