@@ -1,5 +1,7 @@
 pub mod job_queries;
 
+pub mod equality;
+
 use std::collections::HashSet;
 
 use async_trait::async_trait;
@@ -17,9 +19,4 @@ pub struct JobUrl(Url);
 pub enum JobSiteUrl {
     PortalUrl(PortalUrl),
     JobUrl(JobUrl),
-}
-
-#[async_trait]
-pub trait JobQuery {
-    async fn job_query(&self) -> HashSet<JobSiteUrl>;
 }

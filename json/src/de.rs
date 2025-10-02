@@ -2096,7 +2096,7 @@ impl<'a, R: 'a> SeqAccess<'a, R> {
 
 pub struct SeqDeserializer<'de, R, T> {
     de: Deserializer<R>,
-    is_array: bool,
+    is_valid: bool,
     first: bool,
     life_time: PhantomData<&'de ()>,
     output: PhantomData<T>,
@@ -2115,7 +2115,7 @@ impl<'de, R: Read<'de>> Deserializer<R> {
 
 impl<'de, R: Read<'de>, T> SeqDeserializer<'de, R, T> {
     fn new(mut de: Deserializer<R>) -> SeqDeserializer<'de, R, T> {
-        let is_array = match de.parse_whitespace() {
+        let is_valid = match de.parse_whitespace() {
             Ok(Some(b'[')) => {
                 de.eat_char();
                 true
@@ -2125,7 +2125,7 @@ impl<'de, R: Read<'de>, T> SeqDeserializer<'de, R, T> {
         SeqDeserializer {
             de: de,
             first: true,
-            is_array: is_array,
+            is_valid: is_valid,
             output: PhantomData,
             life_time: PhantomData,
         }
@@ -2183,13 +2183,20 @@ impl<'de, R: Read<'de>, T: Deserialize<'de>> Iterator
                 Ok(None)
             }
         }
-        if !self.is_array {
-            return Err(self.de.peek_error(ErrorCode::ExpectedSomeValue))
-                .flatten()
-                .ok();
+
+        if !self.is_valid {
+            if !self.first {
+                return None;
+            }
+            return Some(Err(self.de.peek_error(ErrorCode::ExpectedSomeValue)));
         }
 
-        next_element(self).transpose()
+        let result = next_element(self);
+        if let Err(_) = result {
+            self.is_valid = false;
+        }
+
+        result.transpose()
     }
 }
 

@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::marker::PhantomPinned;
+use std::os::windows::raw;
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::Deserialize;
@@ -7,57 +8,73 @@ use serde::Deserializer;
 use serde::Serializer;
 pub trait JobConstants {
     const DATE_FORMAT: &'static str;
+    const DATE_FORMAT_SIZE: usize;
 }
 
 pub struct DateTimeSerde<T>(pub PhantomData<T>);
 
 impl<T: JobConstants> DateTimeSerde<T> {
-    pub fn serialize<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(
+        date: &DateTime<Utc>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let s = format!("{}", date.format(T::DATE_FORMAT));
-        serializer.serialize_str(&s)
+        let mut buffer = String::with_capacity(T::DATE_FORMAT_SIZE);
+        date.format(T::DATE_FORMAT)
+            .write_to(&mut buffer)
+            .map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&buffer)
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<DateTime<Utc>, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let dt =
-            NaiveDateTime::parse_from_str(&s, T::DATE_FORMAT).map_err(serde::de::Error::custom)?;
+        let dt = NaiveDateTime::parse_from_str(&s, T::DATE_FORMAT)
+            .map_err(serde::de::Error::custom)?;
         Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 }
+
+use serde_json::value::RawValue;
 
 #[derive(Debug, Clone)]
 pub struct JobIntermediate<'a, T: JobConstants> {
     pub job_url: &'a str,
     pub date: DateTime<chrono::Utc>,
-
-    pub _phantom: PhantomData<T>,
+    pub full_raw: &'a RawValue,
+    _phantom: PhantomData<T>,
 }
 
-pub struct JobIntermediateWithString<'a, T>
-where
-    T: JobConstants,
-{
-    pub job_info: JobIntermediate<'a, T>,
-    pub job_string: &'a str,
-}
+impl<'de, T: JobConstants> Deserialize<'de> for JobIntermediate<'de, T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Clone, Deserialize)]
 
-impl<'a, T: JobConstants> TryFrom<&'a str> for JobIntermediateWithString<'a, T>
-where
-    JobIntermediate<'a, T>: Deserialize<'a>,
-{
-    type Error = serde_json::Error;
+        struct Tmp<'a, T: JobConstants> {
+            job_url: &'a str,
+            #[serde(deserialize_with = "DateTimeSerde::<T>::deserialize")]
+            date: DateTime<chrono::Utc>,
+            #[serde(skip)]
+            pub _phantom: PhantomData<T>,
+        }
+        let raw_value: &RawValue = <&RawValue>::deserialize(deserializer)?;
 
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        let intermediate: JobIntermediate<T> = serde_json::from_str(&value)?;
-        Ok(JobIntermediateWithString {
-            job_info: intermediate,
-            job_string: value,
+        let tmp: Tmp<'de, T> = serde_json::from_str(raw_value.get())
+            .map_err(serde::de::Error::custom)?;
+
+        Ok(JobIntermediate {
+            job_url: tmp.job_url,
+            date: tmp.date,
+            full_raw: raw_value,
+            _phantom: PhantomData,
         })
     }
 }
