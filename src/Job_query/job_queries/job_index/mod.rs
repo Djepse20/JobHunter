@@ -5,8 +5,11 @@ use std::collections::{BTreeSet, HashSet};
 use std::ffi::IntoStringError;
 use std::hash::Hash;
 use std::marker::PhantomData;
+use std::pin::{Pin, pin};
 
 use async_trait::async_trait;
+use bytes::Bytes;
+use chrono::format::Item;
 use chrono::{DateTime, Utc, offset};
 use futures::future::Map;
 use futures::{StreamExt, stream};
@@ -18,54 +21,78 @@ use serde_json::Value;
 use serde_json::value::to_raw_value;
 use sqlx::types::Json;
 use sqlx::{database, query};
+use tokio::io::AsyncWriteExt;
 use url::form_urlencoded::parse;
 
 use crate::Job_query::job_queries::database::DataBase;
 use crate::Job_query::job_queries::options::{FetchOptions, QueryOptions};
 use crate::Job_query::{
-    JobQuery, JobSiteUrl, JobUrl, PortalUrl, job_queries::JobFetcher,
+    JobSiteUrl, JobUrl, PortalUrl, job_queries::JobFetcher,
 };
 use scraper::{Html, Selector, html};
 
 impl JobConstants for JobIndex {
     const DATE_FORMAT: &'static str = "%Y-%m-%d";
+    const DATE_FORMAT_SIZE: usize = 10;
 }
+use async_compression::tokio::write::GzipDecoder;
 
 use crate::Job_query::job_queries::job_constants::{
-    JobConstants, JobIntermediate, JobIntermediateWithString,
+    JobConstants, JobIntermediate,
 };
 use crate::Job_query::job_queries::{JOB_TAGS, Job};
-#[async_trait]
 impl JobFetcher for JobIndex {
-    async fn fetch_all_jobs_with_options_and_db(
-        &self,
-        options: &FetchOptions,
-        database: Option<&DataBase>,
-    ) -> Vec<Job> {
+    async fn fetch_all_jobs_with_options_and_db<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+        database: Option<&'a DataBase>,
+    ) -> Option<Vec<Job>> {
+        let database = database?;
+        let (offset, queries) = JobIndex::get_query_pages(options).await?;
+
+        let stream = queries.map(async move |(jobs, url)| {
+            let page = JobIndex::get_jobs(&url).await?;
+
+            Some((jobs, page))
+        }); 
+        let jobs = futures::stream::FuturesUnordered::from_iter(stream);
+
+        let jobs = jobs.filter_map(async |data| match data {
+            Some((val, page)) => Some((val, page)),
+            None => None,
+        });
+
+        JobIndex::get_all_unique_job(&self, database, (offset, pin!(jobs)))
+            .await;
+
         todo!()
     }
 }
-
+use serde_json::value::RawValue;
 impl JobIndex {
     pub const PAGE_SIZE: usize = 20;
 }
 
 impl JobIndex {
-    async fn get_html(url: &str) -> Option<String> {
+    async fn get_jobs(url: &str) -> Option<String> {
         let mut res = reqwest::Client::new().get(url).send().await.ok()?;
 
-        let len = res.content_length();
-
-        let stream = res.bytes_stream();
+        let stream = res.bytes_stream().then(|bytes| async {
+            let bytes = bytes?;
+            let mut decoder = GzipDecoder::new(Vec::new());
+            decoder.write_all(&bytes[..]).await?;
+            decoder.shutdown().await?;
+            Ok::<Bytes, Box<dyn std::error::Error>>(decoder.into_inner().into())
+        });
 
         let start_seq = br#""results":["#;
         let end_seq = br#""skyscraper":{"#;
-        parser::Parser::from_stream(stream, start_seq, end_seq, len).await
+        parser::Parser::from_stream(stream, start_seq, end_seq).await
     }
 }
 
 async fn parse_job(url: &str) -> Option<Job> {
-    let job_text: String = JobIndex::get_html(url).await?;
+    let job_text: String = JobIndex::get_jobs(url).await?;
 
     let tags = JOB_TAGS
         .iter()
@@ -83,79 +110,6 @@ async fn extract_job_text(job_url: &str) -> Option<String> {
     todo!()
 }
 
-pub fn extract_json_for_page(page: &str) -> Option<impl Iterator<Item = &str>> {
-    let start_seq = "var Stash = ";
-    let end_seq = "}]}";
-
-    let start_idx = page.find(start_seq)? + start_seq.len();
-    let end_idx = page.find(end_seq)? + end_seq.len() - 1;
-    let json_str = &page[start_idx..=end_idx];
-
-    // Find the "results" key in the JSON string (naive)
-    let results_key = "\"results\":";
-    let results_pos = json_str.find(results_key)? + results_key.len();
-
-    // Now, from results_pos, find the full array string [...] matching brackets
-    find_balanced_json_array(&json_str[results_pos..]).map(|(start, end)| {
-        find_outermost_array_slices(
-            &json_str[results_pos + start..results_pos + end],
-        )
-    })
-}
-
-pub fn find_outermost_array_slices(json: &str) -> impl Iterator<Item = &str> {
-    let bytes = json.as_bytes();
-    let mut pos = 0;
-    let mut depth = 0;
-    let mut start_idx = None;
-
-    std::iter::from_fn(move || {
-        while pos < bytes.len() {
-            let b = bytes[pos];
-            pos += 1;
-
-            match b {
-                b'[' => {
-                    depth += 1;
-                    if depth == 1 {
-                        start_idx = Some(pos - 1);
-                    }
-                }
-                b']' => {
-                    depth -= 1;
-
-                    if depth == 1 {
-                        let s = start_idx.take()?;
-                        return Some(&json[s..pos]);
-                    }
-                }
-                _ => {}
-            }
-        }
-        None
-    })
-}
-
-fn find_balanced_json_array(s: &str) -> Option<(usize, usize)> {
-    let bytes = s.as_bytes();
-    let mut depth = 0;
-    let mut start = None;
-
-    for (i, &b) in bytes.iter().enumerate() {
-        if b == b'[' {
-            if depth == 0 {
-                start = Some(i);
-            }
-            depth += 1;
-        } else if b == b']' {
-            depth -= 1;
-            if depth == 0 {
-                return Some((start?, i + 1)); // end index is exclusive
-            }
-        }
-    }
-    None
-}
 fn extract_jobs_tags(description: &str) -> Vec<String> {
     todo!()
 }
@@ -251,26 +205,23 @@ impl JobIndex {
             QueryOptions::All => None,
         }
     }
-    pub async fn get_region_query(regions: &[String]) -> String {
-        let regions_stream =
-            stream::iter(regions.iter())
-                .then(|region| async move {
-                    JobIndex::take_first_region(&region).await
-                })
-                .filter_map(|val| async move { val })
-                .peekable();
-        tokio::pin!(regions_stream);
-        let mut region_query = String::new();
 
-        while let Some(region) = regions_stream.as_mut().next().await {
-            match regions_stream.as_mut().peek().await {
-                Some(_) => {
-                    region_query.push_str(&(region + "&"));
-                }
-                None => {
-                    region_query.push_str(&region);
-                }
+    pub async fn get_region_query(regions: &[String]) -> String {
+        let mut regions = regions.iter();
+        let mut region_query = String::new();
+        let mut started = false;
+        while let Some(region) = regions.next() {
+            let region = match JobIndex::take_first_region(&region).await {
+                Some(region) => region,
+                None => continue,
+            };
+
+            if started {
+                region_query.push_str(&("&".to_string() + &region));
+                continue;
             }
+            started = true;
+            region_query.push_str(&(region));
         }
         region_query
     }
@@ -298,131 +249,86 @@ impl JobIndex {
 
 use crate::Job_query::job_queries::job_constants::DateTimeSerde;
 
-impl<'de> Deserialize<'de> for JobIntermediate<'de, JobIndex> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Debug, Deserialize)]
-        struct JobIntermediateJobIndex<'a> {
-            #[serde(rename = "url")]
-            job_url: &'a str,
-            #[serde(with = "DateTimeSerde::<JobIndex>", rename = "firstdate")]
-            pub date: DateTime<chrono::Utc>,
-        }
-
-        let intermediate = JobIntermediateJobIndex::deserialize(deserializer)?;
-        Ok(JobIntermediate::<JobIndex> {
-            job_url: intermediate.job_url,
-            date: intermediate.date,
-            _phantom: PhantomData,
-        })
-    }
-}
-
 impl<'a> JobIndex {
-    async fn unique_jobs_for_query<'b>(
-        (html, jobs_to_take, offset): (&'a str, usize, usize),
+    async fn unique_jobs_for_json<'b, 'c>(
+        (json, jobs_to_take, offset): (&'c str, usize, usize),
 
         should_ignore: &'b mut bool,
         newest_job: &'b Job,
     ) -> (
-        BTreeSet<JobIntermediate<'a, JobIndex>>,
-        BTreeSet<JobIntermediate<'a, JobIndex>>,
+        Vec<JobIntermediate<'c, JobIndex>>,
+        Vec<JobIntermediate<'c, JobIndex>>,
     ) {
-        let mut new_unique_jobs = BTreeSet::new();
-        let mut old_unique_jobs = BTreeSet::new();
+        let mut new_unique_jobs = Vec::new();
+        let mut old_unique_jobs = Vec::new();
+        let mut jobs_iter = serde_json::Deserializer::from_str(json)
+            .into_iter_seq::<JobIntermediate<JobIndex>>()
+            .skip(offset)
+            .take(jobs_to_take);
 
-        match JobIndex::get_job_urls_from_html(html).ok() {
-            Some(jobs) => {
-                let mut jobs_iter = jobs
-                    .into_iter()
-                    .map(|job| job.0.job_info)
-                    .skip(offset)
-                    .take(jobs_to_take);
+        while let Some(job) = jobs_iter.next() {
+            let job = match job {
+                Ok(job) => job,
+                Err(_) => break,
+            };
 
-                while let Some(job) = jobs_iter.next() {
-                    if *should_ignore {
-                        old_unique_jobs.insert(job);
-                        old_unique_jobs.extend(jobs_iter);
-                        break;
-                    }
-                    //IF the newest job recorded in the DB is newer than the job fetched, ignore it and the rest.
-                    // We can ignore the rest, cause we go trough the list in decending order (newest, first).
-                    if newest_job.created_at > job.date {
-                        *should_ignore = true;
-                        continue;
-                    }
-
-                    new_unique_jobs.insert(job);
-                }
+            if *should_ignore {
+                old_unique_jobs.push(job);
+                old_unique_jobs.extend(jobs_iter.flat_map(|val| val));
+                break;
             }
-            None => {
-                //no jobs for query, move along.
-
-                return (new_unique_jobs, old_unique_jobs);
+            //IF the newest job recorded in the DB is newer than the job fetched, ignore it and the rest.
+            // We can ignore the rest, cause we go trough the list in decending order (newest, first).
+            if newest_job.created_at > job.date {
+                *should_ignore = true;
+                continue;
             }
+
+            new_unique_jobs.push(job);
         }
 
         (new_unique_jobs, old_unique_jobs)
     }
-    async fn get_all_unique_job<F>(
+
+    async fn get_all_unique_job(
         &self,
-
-        options: &FetchOptions,
         database: &DataBase,
+        (offset, mut job_pages): (
+            usize,
+            impl StreamExt<Item = (usize, String)> + Unpin,
+        ),
     ) -> Option<()> {
-        let (offset, queries) = JobIndex::get_query_pages(&options).await?;
-        let mut new_unique_jobs = BTreeSet::new();
-        let mut old_unique_jobs = BTreeSet::new();
-
         let newest_job = database.get_newest_job().await.ok()?;
-
+        //TODO: mak all of this into a iterator.
+        // Or a stream.
         let mut should_ignore: bool = false;
+        let (jobs_to_take, html) = job_pages.next().await?;
 
-        let mut queries_iter = queries.into_iter();
+        let mut newer_jobs = Vec::new();
+        let mut older_jobs = Vec::new();
 
-        let (jobs_to_take, query) = queries_iter.next()?;
-        let html = Self::get_html(&query).await?;
-
-        let (new_jobs, old_jobs) = Self::unique_jobs_for_query(
+        let (mut new_jobs, mut old_jobs) = Self::unique_jobs_for_json(
             (&html, jobs_to_take, offset),
             &mut should_ignore,
             &newest_job,
         )
         .await;
-
-        new_unique_jobs.extend(new_jobs);
-        old_unique_jobs.extend(old_jobs);
-
-        for (jobs_to_take, query) in queries_iter {
-            let (new_jobs, old_jobs) = Self::unique_jobs_for_query(
-                (&html, jobs_to_take, offset),
+        newer_jobs.append(&mut new_jobs);
+        older_jobs.append(&mut old_jobs);
+        while let Some((jobs_to_take, html)) = job_pages.next().await {
+            let (mut new_jobs, mut old_jobs) = Self::unique_jobs_for_json(
+                (todo!(), jobs_to_take, 0),
                 &mut should_ignore,
                 &newest_job,
             )
             .await;
-            new_unique_jobs.extend(new_jobs);
-
-            old_unique_jobs.extend(old_jobs);
+            newer_jobs.append(&mut new_jobs);
+            older_jobs.append(&mut old_jobs);
         }
 
-        Some(())
-    }
+        //database.insert_jobs(&newer_jobs).await;
+        //database.delete_jobs(&older_jobs).await;
 
-    fn get_job_urls_from_html(
-        html: &'a str,
-    ) -> Result<
-        impl IntoIterator<Item = Reverse<JobIntermediateWithString<'a, JobIndex>>>,
-        (),
-    > {
-        let mut jobs = extract_json_for_page(&html).ok_or(())?;
-
-        Ok(jobs
-            .into_iter()
-            .filter_map(|job: &str| {
-                JobIntermediateWithString::try_from(job).ok()
-            })
-            .map(|val| Reverse(val)))
+        None
     }
 }

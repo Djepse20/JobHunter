@@ -8,10 +8,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use database::DataBase;
 
-use crate::Job_query::job_queries::{
-    // job_index::JobIndex,
-    options::{FetchOptions, SizeOptions},
-};
+use crate::Job_query::job_queries::options::FetchOptions;
 
 pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
     ("C#", &["c#", "c-sharp", "c sharp", "csharp"]),
@@ -56,21 +53,69 @@ pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
     ("Spring", &["Javaspring", "spring", "spring-framework"]),
 ];
 
-#[async_trait]
 pub trait JobFetcher {
-    async fn fetch_all_jobs_with_options_and_db(
-        &self,
-        options: &FetchOptions,
-        database: Option<&DataBase>,
-    ) -> Vec<Job>;
+    async fn fetch_all_jobs_with_options_and_db<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+        database: Option<&'a DataBase>,
+    ) -> Option<Vec<Job>>;
 
-    async fn fetch_all_jobs_with_options(&self, options: &FetchOptions) -> Vec<Job> {
-        self.fetch_all_jobs_with_options_and_db(options, None)
-            .await
+    async fn fetch_all_jobs_with_options<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+    ) -> Option<Vec<Job>> {
+        self.fetch_all_jobs_with_options_and_db(options, None).await
     }
-    async fn fetch_all_jobs(&self) -> Vec<Job> {
+    async fn fetch_all_jobs<'a>(&'a self) -> Option<Vec<Job>> {
         self.fetch_all_jobs_with_options_and_db(&FetchOptions::full(), None)
             .await
+    }
+}
+
+impl<T1> JobFetcher for (T1, ())
+where
+    T1: JobFetcher,
+{
+    async fn fetch_all_jobs_with_options_and_db<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+        database: Option<&'a DataBase>,
+    ) -> Option<Vec<Job>> {
+        self.0
+            .fetch_all_jobs_with_options_and_db(options, database)
+            .await
+    }
+}
+
+impl<T1, T2> JobFetcher for (T1, T2)
+where
+    T1: JobFetcher,
+    T2: JobFetcher,
+{
+    async fn fetch_all_jobs_with_options_and_db<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+        database: Option<&'a DataBase>,
+    ) -> Option<Vec<Job>> {
+        let mut jobs = Vec::new();
+        match self
+            .0
+            .fetch_all_jobs_with_options_and_db(options, database)
+            .await
+        {
+            Some(first_jobs) => jobs.extend(first_jobs.into_iter()),
+            None => {}
+        };
+
+        match self
+            .1
+            .fetch_all_jobs_with_options_and_db(options, database)
+            .await
+        {
+            Some(second_jobs) => jobs.extend(second_jobs.into_iter()),
+            None => {}
+        };
+        Some(jobs)
     }
 }
 
