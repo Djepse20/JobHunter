@@ -5,9 +5,11 @@ use sqlx::{
     Database, Postgres, QueryBuilder, Transaction, query_builder::Separated,
 };
 
-use crate::Job_query::job_queries::{
-    CompanyInfo, ContactInfo, Job, JobTag,
-    job_constants::{JobConstants, JobIntermediate},
+use crate::{
+    Job_query::job_queries::job_constants::{JobConstants, JobIntermediate},
+    services::database_service::dbtypes::{
+        CompanyInfo, ContactInfo, Job, JobTag,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -203,5 +205,3 @@ impl DataBase {
         Ok(ids)
     }
 }
-
-

@@ -1,11 +1,5 @@
 pub mod job_queries;
 
-pub mod equality;
-
-use std::collections::HashSet;
-
-use async_trait::async_trait;
-
 use reqwest::Url;
 
 #[derive(Debug, PartialEq, Eq, Hash)]

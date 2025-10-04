@@ -16,19 +16,17 @@ use futures::{StreamExt, stream};
 use reqwest::{StatusCode, Url, redirect::Policy};
 use scraper::selector::Parser;
 use serde::de::Visitor;
-use serde::{Deserialize, Serializer};
 use serde_json::Value;
-use serde_json::value::to_raw_value;
-use sqlx::types::Json;
+
 use sqlx::{database, query};
 use tokio::io::AsyncWriteExt;
 use url::form_urlencoded::parse;
 
-use crate::Job_query::job_queries::database::DataBase;
-use crate::Job_query::job_queries::options::{FetchOptions, QueryOptions};
 use crate::Job_query::{
     JobSiteUrl, JobUrl, PortalUrl, job_queries::JobFetcher,
 };
+use crate::services::database_service::database::DataBase;
+use crate::util::options::{FetchOptions, QueryOptions};
 use scraper::{Html, Selector, html};
 
 impl JobConstants for JobIndex {
@@ -54,7 +52,7 @@ impl JobFetcher for JobIndex {
             let page = JobIndex::get_jobs(&url).await?;
 
             Some((jobs, page))
-        }); 
+        });
         let jobs = futures::stream::FuturesUnordered::from_iter(stream);
 
         let jobs = jobs.filter_map(async |data| match data {
@@ -246,8 +244,6 @@ impl JobIndex {
         JobIndex
     }
 }
-
-use crate::Job_query::job_queries::job_constants::DateTimeSerde;
 
 impl<'a> JobIndex {
     async fn unique_jobs_for_json<'b, 'c>(

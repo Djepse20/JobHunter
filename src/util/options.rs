@@ -1,5 +1,4 @@
 use std::ops::Range;
-use std::{any::type_name, collections::HashMap};
 
 use axum::response::IntoResponse;
 use axum_extra::extract::{Query, QueryRejection};
@@ -10,8 +9,6 @@ use reqwest::StatusCode;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use serde_json::json;
-
-use crate::Job_query::job_queries::{database::DataBase, jobs};
 
 #[derive(FromRequestParts, Debug, Serialize)]
 #[from_request(via(Query), rejection(ApiError))]
@@ -79,7 +76,9 @@ impl<'de> Deserialize<'de> for FetchOptions {
 
         let params: Params = Params::deserialize(deserializer)?;
         let size_options = match (params.page_size, params.page, params.jobs) {
-            (Some(page_size), Some(page), None) => SizeOptions::Page { page_size, page },
+            (Some(page_size), Some(page), None) => {
+                SizeOptions::Page { page_size, page }
+            }
 
             (None, None, Some(jobs)) => SizeOptions::NotPaged { jobs },
             (None, None, None) => SizeOptions::All,
@@ -89,9 +88,9 @@ impl<'de> Deserialize<'de> for FetchOptions {
                 ));
             }
         };
-
+        if let Some(params) = params.job_name;
         let query_options = if params.job_name.is_some()
-            || !params.job_regions.is_empty()
+            || params.job_regions.is_empty()
             || !params.job_tags.is_empty()
         {
             QueryOptions::Query {
@@ -108,11 +107,6 @@ impl<'de> Deserialize<'de> for FetchOptions {
             query_options,
         })
     }
-}
-
-pub enum DataBaseOptions {
-    QueryEveryThing,
-    QueryOnlyDb,
 }
 
 impl FetchOptions {
@@ -167,23 +161,22 @@ impl SizeOptions {
             pages: Range<usize>,
             mut first_page: Option<usize>,
         ) -> impl Iterator<Item = (usize, usize)> {
-            pages
-                .into_iter()
-                .scan(jobs, move |remaining_jobs, page| {
-                    if *remaining_jobs == 0 {
-                        return None;
-                    }
+            pages.into_iter().scan(jobs, move |remaining_jobs, page| {
+                if *remaining_jobs == 0 {
+                    return None;
+                }
 
-                    let jobs_taken = if let Some(first_page @ 1..) = first_page.take() {
+                let jobs_taken =
+                    if let Some(first_page @ 1..) = first_page.take() {
                         (*remaining_jobs).min(first_page)
                     } else {
                         (*remaining_jobs).min(max_page_size)
                     };
 
-                    *remaining_jobs -= jobs_taken;
+                *remaining_jobs -= jobs_taken;
 
-                    Some((jobs_taken, page))
-                })
+                Some((jobs_taken, page))
+            })
         }
         match *self {
             Self::Page { page_size, page } => {
@@ -195,7 +188,8 @@ impl SizeOptions {
                 //otherwise, they will allways find a job
 
                 if jobs == 0 {
-                    let pages_with_jobs = get_pages_with_jobs(0, max_page_size, 0..0, None);
+                    let pages_with_jobs =
+                        get_pages_with_jobs(0, max_page_size, 0..0, None);
                     return (0, jobs, pages_with_jobs);
                 }
 
@@ -210,22 +204,28 @@ impl SizeOptions {
 
                 let pages = start_page + start_offset..end_page;
 
-                let pages_with_jobs =
-                    get_pages_with_jobs(jobs, max_page_size, pages, Some(jobs_on_first_page));
+                let pages_with_jobs = get_pages_with_jobs(
+                    jobs,
+                    max_page_size,
+                    pages,
+                    Some(jobs_on_first_page),
+                );
                 (offset, jobs, pages_with_jobs)
             }
 
             Self::NotPaged { jobs } => {
                 let jobs = jobs.min(total_jobs);
                 let pages = start_offset..get_num_pages(jobs);
-                let pages_with_jobs = get_pages_with_jobs(jobs, max_page_size, pages, None);
+                let pages_with_jobs =
+                    get_pages_with_jobs(jobs, max_page_size, pages, None);
                 (0, jobs, pages_with_jobs)
             }
 
             Self::All => {
                 let jobs = total_jobs;
                 let pages = start_offset..get_num_pages(jobs);
-                let pages_with_jobs = get_pages_with_jobs(jobs, max_page_size, pages, None);
+                let pages_with_jobs =
+                    get_pages_with_jobs(jobs, max_page_size, pages, None);
                 (0, jobs, pages_with_jobs)
             }
         }
