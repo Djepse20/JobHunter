@@ -88,7 +88,6 @@ impl<'de> Deserialize<'de> for FetchOptions {
                 ));
             }
         };
-        if let Some(params) = params.job_name;
         let query_options = if params.job_name.is_some()
             || params.job_regions.is_empty()
             || !params.job_tags.is_empty()
