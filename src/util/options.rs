@@ -3,11 +3,9 @@ use std::ops::Range;
 use axum::response::IntoResponse;
 use axum_extra::extract::{Query, QueryRejection};
 use axum_macros::FromRequestParts;
-use chrono::format::Item;
-use chrono::offset;
 use reqwest::StatusCode;
 use serde::de::Error;
-use serde::{Deserialize, Deserializer, Serialize, de};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::json;
 
 #[derive(FromRequestParts, Debug, Serialize)]
@@ -233,12 +231,9 @@ impl SizeOptions {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
-    use crate::Job_query::job_queries::job_index::JobIndex;
 
     use super::*;
-
+    use crate::job_fetchers::job_index::fetcher::JobIndex;
     #[test]
     fn first_page() {
         let size_options: SizeOptions = SizeOptions::Page {

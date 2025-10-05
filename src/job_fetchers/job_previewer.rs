@@ -1,11 +1,11 @@
-use std::marker::PhantomData;
-use std::marker::PhantomPinned;
-use std::os::windows::raw;
-
+use crate::services::database_service::database::DataBase;
+use crate::services::database_service::types::Job;
 use chrono::{DateTime, NaiveDateTime, Utc};
+use futures::StreamExt;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serializer;
+use std::marker::PhantomData;
 pub trait JobConstants {
     const DATE_FORMAT: &'static str;
     const DATE_FORMAT_SIZE: usize;
@@ -61,7 +61,8 @@ impl<'de, T: JobConstants> Deserialize<'de> for JobIntermediate<'de, T> {
         struct Tmp<'a, T: JobConstants> {
             job_url: &'a str,
             #[serde(deserialize_with = "DateTimeSerde::<T>::deserialize")]
-            date: DateTime<chrono::Utc>,
+            #[serde(rename(deserialize = "firstdate"))]
+            first_date: DateTime<chrono::Utc>,
             #[serde(skip)]
             pub _phantom: PhantomData<T>,
         }
@@ -72,7 +73,7 @@ impl<'de, T: JobConstants> Deserialize<'de> for JobIntermediate<'de, T> {
 
         Ok(JobIntermediate {
             job_url: tmp.job_url,
-            date: tmp.date,
+            date: tmp.first_date,
             full_raw: raw_value,
             _phantom: PhantomData,
         })
@@ -87,8 +88,7 @@ impl<'a, T: JobConstants> PartialEq for JobIntermediate<'a, T> {
 }
 impl<'a, T: JobConstants> Ord for JobIntermediate<'a, T> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other)
-            .expect("jobindexjobs should be comparable")
+        self.partial_cmp(other).expect("jobs should be comparable")
     }
 }
 impl<'a, T: JobConstants> PartialOrd for JobIntermediate<'a, T> {

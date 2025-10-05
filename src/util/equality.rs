@@ -14,18 +14,6 @@ impl<T> CompEq<T, IsEq> for T {}
 
 impl<T, U> CompEq<U, IsNotEq> for T {}
 
-pub fn is_equal_comp<T, U>()
-where
-    T: CompEq<U, IsEq>,
-{
-}
-
-pub fn is_not_equal_comp<T, U, Eq: IsEqualityOp>()
-where
-    T: CompEq<U, Eq>,
-{
-}
-
 pub struct Final;
 
 pub trait RecEqChecker<T, Mode, U1, U2, Eq1: IsEqualityOp> {

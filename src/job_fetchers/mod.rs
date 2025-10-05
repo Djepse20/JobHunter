@@ -1,16 +1,16 @@
-pub mod job_constants;
-pub mod job_fetcher;
+pub mod job_previewer;
+
 pub mod job_index;
 
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+pub mod jobs;
+
 use futures::{
     StreamExt,
     stream::{self, FuturesUnordered},
 };
 
 use crate::{
-    services::database_service::{database::DataBase, dbtypes::Job},
+    services::database_service::{database::DataBase, types::Job},
     util::options::FetchOptions,
 };
 
@@ -57,24 +57,6 @@ pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
     ("Spring", &["Javaspring", "spring", "spring-framework"]),
 ];
 
-pub trait JobFetcher {
-    async fn fetch_all_jobs_with_options_and_db<'a>(
-        &'a self,
-        options: &'a FetchOptions,
-        database: Option<&'a DataBase>,
-    ) -> Option<Vec<Job>>;
-
-    async fn fetch_all_jobs_with_options<'a>(
-        &'a self,
-        options: &'a FetchOptions,
-    ) -> Option<Vec<Job>> {
-        self.fetch_all_jobs_with_options_and_db(options, None).await
-    }
-    async fn fetch_all_jobs<'a>(&'a self) -> Option<Vec<Job>> {
-        self.fetch_all_jobs_with_options_and_db(&FetchOptions::full(), None)
-            .await
-    }
-}
 impl<const N: usize, J: JobFetcher> JobFetcher for [J; N] {
     fn fetch_all_jobs_with_options_and_db<'a>(
         &'a self,
@@ -93,8 +75,38 @@ impl<const N: usize, J: JobFetcher> JobFetcher for [J; N] {
     }
 }
 
-pub struct ApplicationHandler {
-    job_net_handler: JobNetHandler,
-    docs_service_handler: (),
+pub trait JobFetcher {
+    async fn fetch_all_jobs_with_options_and_db<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+        database: Option<&'a DataBase>,
+    ) -> Option<Vec<Job>>;
+
+    async fn fetch_all_jobs_with_options<'a>(
+        &'a self,
+        options: &'a FetchOptions,
+    ) -> Option<Vec<Job>> {
+        self.fetch_all_jobs_with_options_and_db(options, None).await
+    }
+    async fn fetch_all_jobs<'a>(&'a self) -> Option<Vec<Job>> {
+        self.fetch_all_jobs_with_options_and_db(&FetchOptions::full(), None)
+            .await
+    }
 }
-struct JobNetHandler;
+
+pub trait FromIntermediate<I>
+where
+    Self: Sized,
+{
+    type Error;
+    async fn from_intermediate(val: I) -> Result<Self, Self::Error>;
+}
+
+pub trait FromQuery<From>
+where
+    Self: Sized,
+{
+    type Error;
+    type Output;
+    async fn create_query(val: From) -> Result<Self::Output, Self::Error>;
+}

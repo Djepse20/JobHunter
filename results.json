@@ -1,0 +1,190 @@
+{
+    "results": [
+        {
+            "addresses": [
+                {
+                    "city": "Aarhus",
+                    "coordinates": {
+                        "latitude": 56.1536882,
+                        "longitude": 10.2056076
+                    },
+                    "id": 159558,
+                    "line": "Søndergade 66-68, 4. sal",
+                    "simple_string": "Søndergade 66-68, 4. sal, 8000 Aarhus",
+                    "zipcode": "8000"
+                },
+                {
+                    "city": "Aalborg",
+                    "coordinates": {
+                        "latitude": 57.0503579,
+                        "longitude": 9.9222409
+                    },
+                    "id": 2533903,
+                    "line": "Toldbod Plads 1",
+                    "simple_string": "Toldbod Plads 1, 9000 Aalborg",
+                    "zipcode": "9000"
+                },
+                {
+                    "city": "København K",
+                    "coordinates": {
+                        "latitude": 55.67299283,
+                        "longitude": 12.5878946
+                    },
+                    "id": 3058586,
+                    "line": "Strandgade 3",
+                    "simple_string": "Strandgade 3, 1401 København K",
+                    "zipcode": "1401"
+                }
+            ],
+            "app_apply_url": null,
+            "apply_deadline_asap": true,
+            "apply_url": null,
+            "area": "København, Aarhus eller Aalborg",
+            "bottom_logo": null,
+            "company": {
+                "bottom_logo_url": null,
+                "bundurlisjoburl": false,
+                "companyprofile_url": "https:\/\/www.jobindex.dk\/virksomhed\/809\/netcompany-a-s#om-virksomhed",
+                "editurl": "\/adm\/company\/edit\/809",
+                "employment_place": [],
+                "get_logo_company": "\/adm\/media\/company\/809",
+                "homeurl": "https:\/\/www.netcompany.com\/da",
+                "humanjob_workplace": false,
+                "id": 809,
+                "logo": "https:\/\/www.jobindex.dk\/img\/logo\/Netcompany_logo_231102_.png",
+                "logolink_url": null,
+                "name": "Netcompany A\/S",
+                "num_followers": 1333,
+                "rating_url": "https:\/\/www.jobindex.dk\/virksomhed\/809\/netcompany-a-s#evalueringer",
+                "topurlisjoburl": false,
+                "use_joburl_pa": false,
+                "video_logo_url": null
+            },
+            "companytext": "Netcompany A\/S",
+            "distance": null,
+            "firstdate": "2025-09-13",
+            "geoareaid": [
+                1,
+                2,
+                3,
+                7,
+                8,
+                56,
+                274,
+                1034,
+                1128,
+                1221,
+                15178,
+                15182,
+                15183,
+                15184,
+                15191,
+                15195,
+                16150,
+                16151,
+                16152,
+                16153,
+                16154
+            ],
+            "geojson": {
+                "features": [
+                    {
+                        "geometry": {
+                            "coordinates": [
+                                10.2056076,
+                                56.1536882
+                            ],
+                            "type": "Point"
+                        },
+                        "properties": {
+                            "job_count": 0,
+                            "objectId": 159558,
+                            "tid": "",
+                            "title": "Søndergade 66-68, 4. sal, 8000 Aarhus",
+                            "type": "address"
+                        },
+                        "type": "Feature"
+                    },
+                    {
+                        "geometry": {
+                            "coordinates": [
+                                9.9222409,
+                                57.0503579
+                            ],
+                            "type": "Point"
+                        },
+                        "properties": {
+                            "job_count": 0,
+                            "objectId": 2533903,
+                            "tid": "",
+                            "title": "Toldbod Plads 1, 9000 Aalborg",
+                            "type": "address"
+                        },
+                        "type": "Feature"
+                    },
+                    {
+                        "geometry": {
+                            "coordinates": [
+                                12.5878946,
+                                55.67299283
+                            ],
+                            "type": "Point"
+                        },
+                        "properties": {
+                            "job_count": 0,
+                            "objectId": 3058586,
+                            "tid": "",
+                            "title": "Strandgade 3, 1401 København K",
+                            "type": "address"
+                        },
+                        "type": "Feature"
+                    }
+                ],
+                "type": "FeatureCollection"
+            },
+            "has_spo": false,
+            "headline": "Software Developer",
+            "home_workplace": false,
+            "html": "<div id=\"jobad-wrapper-h1535255\"   data-jobsearch_position='1' data-jobsearchid='938732209' data-abtest_id='6375066435--b73e2467662bb215ad305348c37f72695d455de3'><div data-beacon-tid=\"h1535255\">\n\n\n<div class=\"jobsearch-result\">\n<div class=\"PaidJob\">\n\n    <div class=\"jix_toolbar jix_toolbar_top jix_appetizer_toolbar\" id=\"jix_toolbar_h1535255_top\">\n        <div class=\"jix-toolbar-top\">\n        \n        <div class=\"jix-toolbar-top__company\">\n            <a href=\"https:\/\/www.netcompany.com\/da\" rel=\"noopener\" target=\"_blank\">Netcompany A\/S<\/a>\n        <\/div>\n    <div class=\"jix-toolbar-top__top-controls\">\n        \n        \n<div class=\"ml-2 d-flex flex-column\">\n<div class=\"jix-options-menu jobad-element-menu dropdown\">\n    <button aria-expanded=\"false\" aria-haspopup=\"true\" class=\"jix-icon-button jix-icon-button--secondary jix-icon-button--sm\" data-toggle=\"dropdown\" id=\"jobad-element-menu-h1535255\" title=\"Menu\" type=\"button\"><svg class=\"svg-icon svg-icon--inline\" role=\"presentation\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-options-menu--filled\"><\/use><\/svg><\/button>\n    <div class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"jobad-element-menu-h1535255\">\n        \n<span class=\"jobad-element-myjob-interest\" data-state=\"notallowed\">\n    <a class=\"dropdown-item\" data-action=\"handlecontact\" data-tid=\"h1535255\" href=\"\/bruger\/dine-job\/h1535255\/skift_kontakt\">\n        Vis interesse\n<\/a><\/span>\n            \n\n<button class=\"jobad-element-not-interested-job dropdown-item\" data-state=\"unselected\" data-tid=\"h1535255\">\n    Ikke interesseret\n<\/button>\n            <a class=\"dropdown-item jobad-element-menu-errorreport\" href=\"\/bruger\/fejlmelding\/h1535255\" onclick=\"jixAnalytics(&quot;event&quot;, {category: &quot;jobannonce&quot;, action: &quot;click&quot;, label: &quot;errorreport&quot;})\" rel=\"noopener\" target=\"_blank\">Fejlmeld annonce<\/a>\n            <div class=\"jobad-element-menu-share\" data-share-tid=\"h1535255\" data-share-title=\"Software Developer\" data-share-url=\"https:\/\/www.jobindex.dk\/vis-job\/h1535255\">\n                <div class=\"dropdown-divider\"><\/div>\n                <div class=\"category-header\">Del annoncen<\/div>\n                    \n                        <button class=\"dropdown-item\" type=\"button\" data-share=\"link\"><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-share-link\"><\/use><\/svg>Kopier link<\/button>\n                    \n                        <button class=\"dropdown-item\" type=\"button\" data-share=\"native\" hidden><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-share-native\"><\/use><\/svg>Via apps<\/button>\n                    \n                        <a class=\"dropdown-item\" data-share=\"facebook\" href=\"https:\/\/www.facebook.com\/sharer\/sharer.php?u=https%3A%2F%2Fwww.jobindex.dk%2Fvis-job%2Fh1535255\" rel=\"noopener nofollow\" target=\"_blank\">\n                            <svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-share-facebook\"><\/use><\/svg>Facebook\n<\/a>                    \n                        <a class=\"dropdown-item\" data-share=\"linkedin\" href=\"https:\/\/www.linkedin.com\/shareArticle?url=https%3A%2F%2Fwww.jobindex.dk%2Fvis-job%2Fh1535255&amp;mini=true\" rel=\"noopener nofollow\" target=\"_blank\">\n                            <svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-share-linkedin\"><\/use><\/svg>LinkedIn\n<\/a><\/div>    <\/div>\n<\/div><!-- For mounting feature tip -->\n<span id='jobad-element-menu-feature-tip-h1535255'>\n<\/span>\n<\/div>\n\n    <\/div>\n<\/div>\n\n    <\/div>\n\n    <div class=\"PaidJob-inner\">\n        \n\n<A HREF=\"https:\/\/www.netcompany.com\/da\" data-click=\"\/c?t=h1535255&amp;ctx=w&amp;u=20987255&amp;jsid=938732209&amp;jsp=1\" rel=\"noopener\" target=\"_blank\"><IMG SRC=\"\/img\/logo\/Netcompany_logo_231102_.png\" ALIGN=\"right\" ALT=\"Netcompany A\/S\" style=\"border: 0px; margin: 0 0 5px 20px;\"><\/a>\n<h4><A HREF=\"https:\/\/smrtr.io\/nkxyX\" data-click=\"\/c?t=h1535255&amp;ctx=w&amp;jsid=938732209&amp;jsp=1\" rel=\"noopener\" target=\"_blank\">Software Developer<\/a><\/h4>\n\n        <div class=\"jobad-element-area\">\n            <span class=\"jix_robotjob--area\">København, Aarhus eller Aalborg<\/span>\n            <div class=\"jobad-element-distance\">\n        <svg class=\"svg-icon svg-icon--sm mr-1\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-geolocation\"><\/use><\/svg><a class=\"jobad-element-dialog-link\" data-target=\"#traveltime-modal\" data-toggle=\"modal\" href=\"#\" onclick=\"jixAnalytics(&quot;event&quot;, {category: &quot;jobannonce&quot;, action: &quot;click&quot;, label: &quot;se-rejsetid&quot;})\" role=\"button\">Se rejsetid<\/a>\n<\/div>\n        <\/div>\n\n<p>Vil du være med til at udvikle nogle af branchens vigtigste og mest komplekse IT-løsninger? <\/p><p>Din hverdag vil være præget af både tekniske og kunderettede opgaver med leverancer, der spænder fra nyudvikling af IT-projekter til løbende udvikling på eksisterende løsninger og serviceydelser.<\/p><p>Det er en del af vores kultur og værdigrundlag, at alle medarbejdere, uanset baggrund, identitet og erfaring mødes med forståelse og respekt samt lige muligheder for udvikling og trivsel. <\/p>\n\n\n    <\/div>\n\n    <div class=\"jix_toolbar jix_appetizer_toolbar\" id=\"jix_toolbar_h1535255\">\n        \n\n    <div class=\"my-4 d-flex justify-content-between flex-column-reverse flex-md-row align-items-sm-end\">\n            <div class=\"jix-toolbar__companyprofile\">\n                    \n                    <strong>Tjek jobglæden:<\/strong>\n                    <div class=\"jix-toolbar__rating\">\n                        <a class=\"jix-toolbar__rating-score\" href=\"\/virksomhed\/809\/netcompany-a-s#evalueringer\" onclick=\"jixAnalytics(&#39;event&#39;, { category: &#39;jobannonce&#39;, action: &#39;click&#39;, label: &#39;evalueringsstjerner&#39; })\">\n                            <svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-rating-selected\"><\/use><\/svg><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-rating-selected\"><\/use><\/svg><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-rating-selected\"><\/use><\/svg><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-rating-selected\"><\/use><\/svg><svg class=\"svg-icon svg-icon--sm\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-rating-unselected\"><\/use><\/svg>\n                            <span class=\"sr-only\">4 af 5 stjerner<\/span>\n                        <\/a>\n                        <a class=\"jix-toolbar__rating-count\" href=\"\/virksomhed\/809\/netcompany-a-s#evalueringer\" onclick=\"jixAnalytics(&#39;event&#39;, { category: &#39;jobannonce&#39;, action: &#39;click&#39;, label: &#39;evalueringsstjerner&#39; })\">255 evalueringer<\/a>\n                    <\/div>\n            <\/div>\n        <div class=\"jix-toolbar__pub\">\n            <div class=\"jix-toolbar__pubdate\">\n                Indrykket:\n                <time datetime=\"2025-09-13\">13-09-2025<\/time>\n            <\/div>\n        <\/div>\n    <\/div>\n    <div class=\"mt-4\">\n        <div class=\"jix-toolbar__buttons\">\n                <span class=\"btn-list__element\">\n                    \n<span class=\"jobad-element-myjob btn btn-sm btn-secondary\" data-state=\"unsaved\" data-tid=\"h1535255\">\n    <a href=\"\/bruger\/dine-job\/h1535255\/gem\">\n        <svg class=\"svg-icon svg-icon--mini m-0\" role=\"presentation\"><use xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" xlink:href=\"#svg-button-myjob-unsaved\"><\/use><\/svg>\n            <span class=\"ml-1\">Gem job<\/span>\n<\/a><\/span>\n                <\/span>\n            \n                <span class=\"btn-list__element d-none d-md-inline\">\n                            <a class=\"btn btn-sm btn-primary seejobdesktop\" data-click=\"\/c?t=h1535255&amp;ctx=w&amp;jsid=938732209&amp;jsp=1\" href=\"https:\/\/smrtr.io\/nkxyX\" rel=\"noopener\" target=\"_blank\">Se jobbet<\/a>\n\n                <\/span>\n        <\/div>\n                    <a class=\"btn btn-sm btn-block btn-primary d-md-none mt-2 seejobmobil\" data-click=\"\/c?t=h1535255&amp;ctx=w&amp;jsid=938732209&amp;jsp=1\" href=\"https:\/\/smrtr.io\/nkxyX\" rel=\"noopener\" target=\"_blank\">Se jobbet<\/a>\n\n    <\/div>\n\n\n    <\/div>\n<\/div>\n<\/div>\n\n<\/div><\/div>",
+            "is_archived": false,
+            "is_local": false,
+            "lastdate": "2025-10-11",
+            "listlogo_url": "https:\/\/www.jobindex.dk\/img\/logo\/Netcompany_logo_231102_.png",
+            "quickapply_clientid": null,
+            "rating": {
+                "ratings": 255,
+                "score": 4.0
+            },
+            "share_url": "https:\/\/www.jobindex.dk\/vis-job\/h1535255",
+            "tid": "h1535255",
+            "top_logo": {
+                "align": "right",
+                "image_url": "https:\/\/www.jobindex.dk\/img\/logo\/Netcompany_logo_231102_.png",
+                "link_type": null,
+                "link_url": null
+            },
+            "url": "https:\/\/www.jobindex.dk\/c?t=h1535255&ctx=w&jobsearchid=938732209&jobsearch_position=1",
+            "video": null,
+            "workplace_company": {
+                "bottom_logo_url": null,
+                "bundurlisjoburl": false,
+                "companyprofile_url": "https:\/\/www.jobindex.dk\/virksomhed\/809\/netcompany-a-s#om-virksomhed",
+                "editurl": "\/adm\/company\/edit\/809",
+                "employment_place": [],
+                "get_logo_company": "\/adm\/media\/company\/809",
+                "homeurl": "https:\/\/www.netcompany.com\/da",
+                "humanjob_workplace": false,
+                "id": 809,
+                "logo": "https:\/\/www.jobindex.dk\/img\/logo\/Netcompany_logo_231102_.png",
+                "logolink_url": null,
+                "name": "Netcompany A\/S",
+                "num_followers": 1333,
+                "rating_url": "https:\/\/www.jobindex.dk\/virksomhed\/809\/netcompany-a-s#evalueringer",
+                "topurlisjoburl": false,
+                "use_joburl_pa": false,
+                "video_logo_url": null
+            }
+        }
+    ],
+    "title": "Ledige job - Software - 9000 Aalborg"
+}

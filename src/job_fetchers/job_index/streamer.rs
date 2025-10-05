@@ -1,17 +1,10 @@
-use core::{num, slice, str};
-use std::pin;
-
-use axum::body::Bytes;
-use bytes::{BufMut, BytesMut};
-use chrono::offset;
-use futures::{Stream, StreamExt};
-use sqlx::encode::IsNull;
+use futures::StreamExt;
 
 pub(crate) struct Parser;
 
 impl Parser {
     pub async fn from_stream<S, const N1: usize, const N2: usize>(
-        mut stream: S,
+        stream: S,
         start_seq: &[u8; N1],
         end_seq: &[u8; N2],
     ) -> Option<String>
@@ -29,14 +22,14 @@ impl Parser {
         let mut started = false;
         let mut output: Vec<u8> = Vec::new();
         let mut stream = std::pin::pin!(stream);
-        while let Some(chunk_res) = stream.next().await {
-            let chunk = match chunk_res {
+        while let Some(chunk) = stream.next().await {
+            let chunk = match chunk {
                 Ok(c) => c,
                 Err(_) => return None,
             };
             let bytes = chunk.as_ref();
 
-            for (idx, &b) in bytes.iter().enumerate() {
+            for &b in bytes.iter() {
                 if !started {
                     if start_seq[start_j] != b {
                         start_j = 0;
@@ -148,7 +141,7 @@ mod parsertests {
     #[tokio::test]
     async fn works_on_split_on_startseq_two_stream() {
         let mut file_str = tokio::fs::read("job_test.txt").await.unwrap();
-        let mut part1 = file_str.split_off(76);
+        let part1 = file_str.split_off(76);
         let between = file_str.split_off(72);
 
         let stream = stream::iter(vec![
@@ -173,7 +166,7 @@ mod parsertests {
     #[tokio::test]
     async fn works_on_split_on_endseq_multiple_matches_stream() {
         let mut file_str = r#"{"sus":{},"haha":{"😤👿😳😀😡😀💩🥰😋😳🤣":"hah","results":[{"abc":1},{"😤👿😳😀😡😀💩🥰😋😳🤣":"hah"},{"gg":"c"},"skyscrape": {}],"skyscraper":{"default_height":600,"default_width":160,"fallbackUrl":"\/iframe\/skyscraper\/3984","url":"\/iframe\/skyscraper\/3984?catid=-2&cattype=p"},"suggestedChanges":{"category":{"suggestions":null,"suggestionsAllParams":null,"suggestionsAllUrl":null},"company":"","jobsForUkraine":0,"query":{"suggestion":null,"suggestionParams":null,"suggestionUrl":null}},"title":"Ledigejob-Software"}}"#.as_bytes().to_vec();
-        let mut part1 = file_str.split_off(163);
+        let part1 = file_str.split_off(163);
 
         let stream = stream::iter(vec![
             Ok::<Bytes, Box<dyn std::error::Error>>(Bytes::from_owner(
@@ -195,7 +188,7 @@ mod parsertests {
     #[tokio::test]
     async fn works_on_split_on_endseq_one_stream() {
         let mut file_str = r#"{"sus":{},"haha":{"😤👿😳😀😡😀💩🥰😋😳🤣":"hah","results":[{"abc":1},{"😤👿😳😀😡😀💩🥰😋😳🤣":"hah"},{"gg":"c"}],"skyscraper":{"default_height":600,"default_width":160,"fallbackUrl":"\/iframe\/skyscraper\/3984","url":"\/iframe\/skyscraper\/3984?catid=-2&cattype=p"},"suggestedChanges":{"category":{"suggestions":null,"suggestionsAllParams":null,"suggestionsAllUrl":null},"company":"","jobsForUkraine":0,"query":{"suggestion":null,"suggestionParams":null,"suggestionUrl":null}},"title":"Ledigejob-Software"}}"#.as_bytes().to_vec();
-        let mut part1 = file_str.split_off(163);
+        let part1 = file_str.split_off(163);
 
         let stream = stream::iter(vec![
             Ok::<Bytes, Box<dyn std::error::Error>>(Bytes::from_owner(

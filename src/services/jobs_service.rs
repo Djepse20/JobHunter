@@ -1,15 +1,9 @@
 use std::{marker::PhantomData, mem::MaybeUninit};
 
-use futures::{
-    StreamExt,
-    stream::{self, FuturesUnordered},
-};
-use serde::{Deserialize, Serialize};
-
 use crate::services::database_service::database::DataBase;
 use crate::{
-    Job_query::job_queries::JobFetcher,
-    services::database_service::dbtypes::Job,
+    job_fetchers::JobFetcher,
+    services::database_service::types::Job,
     util::{
         equality::{IsEqualityOp, RecEqChecker, TupleLength},
         options::FetchOptions,
@@ -81,7 +75,6 @@ macro_rules! fetchers {
             ) -> Option<Vec<Job>> {
                 match self {
                     $(Fetchers::$variant(inner) => inner.fetch_all_jobs_with_options_and_db(options,database).await,)*
-                    _ => {todo!()}
                 }
             }
 
@@ -97,12 +90,13 @@ macro_rules! fetchers {
 }
 
 impl<const N: usize, T: JobFetcher> Jobs<DataBase, [T; N]> {
+    #[allow(unused)]
     async fn fetch_jobs(&self, options: FetchOptions) -> Option<Vec<Job>> {
         let jobs_from_sites = self
             .job_fetchers
             .fetch_all_jobs_with_options_and_db(&options, Some(&self.database))
             .await;
-        todo!();
+        jobs_from_sites
     }
 }
 

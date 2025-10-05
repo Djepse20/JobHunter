@@ -1,2 +1,2 @@
 pub mod database;
-pub mod dbtypes;
+pub mod types;

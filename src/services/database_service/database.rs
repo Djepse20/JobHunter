@@ -1,15 +1,12 @@
-use std::{io::Write, pin::pin};
+use std::pin::pin;
 
+use crate::job_fetchers::job_previewer::{JobConstants, JobIntermediate};
+use crate::services::database_service::types::{
+    CompanyInfo, ContactInfo, Job, JobTag,
+};
 use futures::StreamExt;
 use sqlx::{
     Database, Postgres, QueryBuilder, Transaction, query_builder::Separated,
-};
-
-use crate::{
-    Job_query::job_queries::job_constants::{JobConstants, JobIntermediate},
-    services::database_service::dbtypes::{
-        CompanyInfo, ContactInfo, Job, JobTag,
-    },
 };
 
 #[derive(Debug, Clone)]
@@ -71,9 +68,10 @@ impl DataBase {
 
         let company_id =
             self.insert_company_info(&job.company_info, &mut tx).await?;
-        let contact_id =
-            self.insert_contact_info(&job.contact_info, &mut tx).await?;
-
+        // let contact_id =
+        //     self.insert_contact_info(&job.contact_info, &mut tx).await?;
+        // let contact_id =
+        //     self.insert_contact_info(&job.contact_info, &mut tx).await?;
         let job_info = &job.job_info;
 
         let job_id: i64 = sqlx::query_scalar(
@@ -125,14 +123,13 @@ impl DataBase {
     ) -> Result<i64, sqlx::Error> {
         let company_id: i64 = sqlx::query_scalar(
             "INSERT INTO company_info 
-        (name, address,email_address) 
-        VALUES ($1,$2,$3) 
+        (name, address) 
+        VALUES ($1,$2) 
         ON CONFLICT (name) DO NOTHING
         RETURNING company_id",
         )
         .bind(&company_info.name)
-        .bind(&company_info.email_address)
-        .bind(&company_info.address)
+        .bind(&company_info.locations[0].address)
         .fetch_one(&mut *(*tx))
         .await?;
         Ok(company_id)
@@ -174,7 +171,7 @@ impl DataBase {
             job_tags.iter().map(|tag| tag.name.as_str()).collect();
 
         let ids: Vec<i64> = sqlx::query_scalar(
-            r#"
+            r#"--sql
     WITH 
       new_tags AS (
         INSERT INTO job_tags (name)
