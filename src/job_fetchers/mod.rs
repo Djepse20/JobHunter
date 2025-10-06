@@ -1,6 +1,8 @@
 pub mod job_index;
 
 pub(super) mod de;
+
+pub mod jobs;
 pub mod streamer;
 use futures::{
     StreamExt,

@@ -6,11 +6,9 @@ use serde_json::Value;
 
 use tokio::io::AsyncWriteExt;
 
-use crate::job_fetchers::de::jobs::get_all_unique_job;
 use crate::job_fetchers::job_index::preview::JobPreview;
-use crate::job_fetchers::{
-    JOB_TAGS, Job, JobFetcher, de::preview::DeserializableJob, streamer,
-};
+use crate::job_fetchers::jobs::get_all_unique_job;
+use crate::job_fetchers::{Job, JobFetcher, streamer};
 use crate::util::options::FetchOptions;
 use crate::{
     job_fetchers::FromQuery, services::database_service::database::DataBase,

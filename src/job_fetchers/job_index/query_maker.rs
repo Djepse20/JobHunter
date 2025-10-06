@@ -77,3 +77,9 @@ impl JobIndex {
         Some("geoareaud=".to_owned() + uuid)
     }
 }
+#[cfg(test)]
+mod tests {
+    #[tokio::test]
+
+    async fn first_page() {}
+}
