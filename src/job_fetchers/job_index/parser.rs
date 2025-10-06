@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     job_fetchers::{
-        JOB_TAGS, job_index::fetcher::JobIndex, job_previewer::JobIntermediate,
+        JOB_TAGS, job_index::fetcher::JobIndex, job_index::preview::JobPreview,
     },
     services::database_service::types::{
         CompanyInfo, Description, Job, JobInfo, JobTag, JobUrl, Location, Title,
@@ -140,7 +140,6 @@ impl<'a> TryFrom<RawHeadlineAndUrl<'a>> for (JobUrl, Title) {
     }
 }
 
-use crate::job_fetchers::job_previewer::DateTimeSerde;
 use serde_json::value::RawValue;
 #[derive(Deserialize)]
 struct JobIndexData<'a> {
@@ -153,18 +152,16 @@ struct JobIndexData<'a> {
     #[serde(borrow)]
     addresses: RawAddresses<'a>,
 
-    #[serde(deserialize_with = "DateTimeSerde::<JobIndex>::deserialize")]
+    #[serde(deserialize_with = "JobPreview::<JobIndex>::deserialize")]
     #[serde(rename(deserialize = "lastdate"))]
     last_date: DateTime<Utc>,
 }
 
-impl<'a> TryFrom<JobIntermediate<'a, JobIndex>> for Job {
+impl<'a> TryFrom<JobPreview<'a, JobIndex>> for Job {
     type Error = ();
-    fn try_from(
-        value: JobIntermediate<'a, JobIndex>,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(value: JobPreview<'a, JobIndex>) -> Result<Self, Self::Error> {
         let job_index: JobIndexData =
-            serde_json::from_str(value.full_raw.get()).map_err(|_| ())?;
+            serde_json::from_slice(value.full_post).map_err(|_| ())?;
         let (job_tags, description) = job_index.html.try_into()?;
         let (job_url, title) = job_index.headline_and_url.try_into()?;
 

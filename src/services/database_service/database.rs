@@ -1,6 +1,7 @@
 use std::pin::pin;
 
-use crate::job_fetchers::job_previewer::{JobConstants, JobIntermediate};
+use crate::job_fetchers::de::preview::DeserializableJob;
+use crate::job_fetchers::job_index::preview::JobPreview;
 use crate::services::database_service::types::{
     CompanyInfo, ContactInfo, Job, JobTag,
 };
@@ -21,7 +22,7 @@ impl DataBase {
     pub async fn get_newest_job(&self) -> Result<Job, sqlx::Error> {
         todo!()
     }
-    pub async fn insert_jobs<'a, T: JobConstants>(
+    pub async fn insert_jobs<'a, T: DeserializableJob>(
         &self,
         jobs: &[Job],
     ) -> Result<Vec<i64>, sqlx::Error> {
@@ -38,9 +39,9 @@ impl DataBase {
         Ok(job_ids)
     }
 
-    pub async fn delete_jobs<'a, T: JobConstants>(
+    pub async fn delete_jobs<'a, T: DeserializableJob>(
         &self,
-        jobs: &[JobIntermediate<'a, T>],
+        jobs: &[JobPreview<'a, T>],
     ) -> Result<Vec<i64>, sqlx::Error> {
         let mut job_ids: Vec<i64> = Vec::with_capacity(jobs.len());
         // these are assumed to be in the correct order. Ie if any one fails that must mean the next ones will also fail.
@@ -55,9 +56,9 @@ impl DataBase {
         Ok(job_ids)
     }
 
-    pub async fn delete_job<'a, T: JobConstants>(
+    pub async fn delete_job<'a, T: DeserializableJob>(
         &self,
-        jobs: &JobIntermediate<'a, T>,
+        jobs: &JobPreview<'a, T>,
     ) -> Result<i64, sqlx::Error> {
         todo!()
     }
@@ -75,20 +76,19 @@ impl DataBase {
         let job_info = &job.job_info;
 
         let job_id: i64 = sqlx::query_scalar(
-            "INSERT INTO job_info 
-        (title,description,job_url,company_id,contact_id) 
+            "INSERT INTO job_info
+        (title,description,job_url,company_id,contact_id)
         VALUES ($1,$2,$3,$4,$5) RETURNING job_id",
         )
-        .bind(&job_info.title)
-        .bind(&job_info.description)
-        .bind(&job_info.job_url)
-        .bind(&company_id)
+        // .bind(&job_info.title)
+        // .bind(&job_info.description)
+        // .bind(&job_info.job_url)
+        // .bind(&company_id)
         .fetch_one(&mut *tx)
         .await?;
 
-        let tag_ids = self
-            .insert_job_relations(&job.job_tags, job_id, &mut tx)
-            .await?;
+        let tag_ids =
+            self.insert_job_relations(todo!(), job_id, &mut tx).await?;
 
         tx.commit().await?;
         Ok(job_id)
@@ -102,9 +102,9 @@ impl DataBase {
         tx: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, sqlx::Error> {
         let contact_id: i64 = sqlx::query_scalar(
-            "INSERT INTO company_info 
-        (name, phone_number,email) 
-        VALUES ($1,$2,$3) 
+            "INSERT INTO company_info
+        (name, phone_number,email)
+        VALUES ($1,$2,$3)
         ON CONFLICT (name) DO NOTHING
         RETURNING contact_id",
         )
@@ -122,14 +122,13 @@ impl DataBase {
         tx: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, sqlx::Error> {
         let company_id: i64 = sqlx::query_scalar(
-            "INSERT INTO company_info 
-        (name, address) 
-        VALUES ($1,$2) 
+            "INSERT INTO company_info
+        (name, address)
+        VALUES ($1,$2)
         ON CONFLICT (name) DO NOTHING
         RETURNING company_id",
         )
         .bind(&company_info.name)
-        .bind(&company_info.locations[0].address)
         .fetch_one(&mut *(*tx))
         .await?;
         Ok(company_id)
@@ -167,12 +166,11 @@ impl DataBase {
         job_id: i64,
         tx: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<i64>, sqlx::Error> {
-        let tags: Vec<&str> =
-            job_tags.iter().map(|tag| tag.name.as_str()).collect();
+        let tags: Vec<&str> = job_tags.iter().map(|tag| tag.name).collect();
 
         let ids: Vec<i64> = sqlx::query_scalar(
             r#"--sql
-    WITH 
+    WITH
       new_tags AS (
         INSERT INTO job_tags (name)
         SELECT unnest($1::text[])

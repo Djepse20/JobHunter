@@ -1,9 +1,7 @@
-pub mod job_previewer;
-
 pub mod job_index;
 
-pub mod jobs;
-
+pub(super) mod de;
+pub mod streamer;
 use futures::{
     StreamExt,
     stream::{self, FuturesUnordered},

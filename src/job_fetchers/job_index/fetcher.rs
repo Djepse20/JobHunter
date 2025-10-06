@@ -6,21 +6,24 @@ use serde_json::Value;
 
 use tokio::io::AsyncWriteExt;
 
-use crate::job_fetchers::jobs::get_all_unique_job;
+use crate::job_fetchers::de::jobs::get_all_unique_job;
+use crate::job_fetchers::job_index::preview::JobPreview;
+use crate::job_fetchers::{
+    JOB_TAGS, Job, JobFetcher, de::preview::DeserializableJob, streamer,
+};
 use crate::util::options::FetchOptions;
 use crate::{
     job_fetchers::FromQuery, services::database_service::database::DataBase,
 };
 
-impl JobConstants for JobIndex {
-    const DATE_FORMAT: &'static str = "%Y-%m-%d";
-    const DATE_FORMAT_SIZE: usize = 10;
-}
 use async_compression::tokio::write::GzipDecoder;
+pub struct JobIndex;
+impl JobIndex {
+    pub fn new() -> Self {
+        JobIndex
+    }
+}
 
-use crate::job_fetchers::{
-    JOB_TAGS, Job, JobFetcher, job_index::streamer, job_previewer::JobConstants,
-};
 impl JobFetcher for JobIndex {
     async fn fetch_all_jobs_with_options_and_db<'a>(
         &'a self,
@@ -42,7 +45,11 @@ impl JobFetcher for JobIndex {
             None => None,
         });
 
-        get_all_unique_job::<JobIndex>(database, (offset, pin!(jobs))).await;
+        get_all_unique_job::<_, JobPreview<'_, JobIndex>>(
+            database,
+            (offset, pin!(jobs)),
+        )
+        .await;
 
         todo!()
     }
@@ -65,7 +72,7 @@ impl JobIndex {
 
         let start_seq = br#""results":["#;
         let end_seq = br#""skyscraper":{"#;
-        streamer::Parser::from_stream(stream, start_seq, end_seq).await
+        streamer::Streamer::get_seq_in_stream(stream, start_seq, end_seq).await
     }
 }
 
@@ -119,12 +126,5 @@ impl JobIndex {
         let json: Value =
             serde_json::from_str::<serde_json::Value>(&res).ok()?;
         Some(json.as_object()?.get("hitcount")?.as_u64()? as usize)
-    }
-}
-
-pub struct JobIndex;
-impl JobIndex {
-    pub fn new() -> Self {
-        JobIndex
     }
 }

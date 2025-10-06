@@ -1,9 +1,9 @@
 use futures::StreamExt;
 
-pub(crate) struct Parser;
+pub(crate) struct Streamer;
 
-impl Parser {
-    pub async fn from_stream<S, const N1: usize, const N2: usize>(
+impl Streamer {
+    pub async fn get_seq_in_stream<S, const N1: usize, const N2: usize>(
         stream: S,
         start_seq: &[u8; N1],
         end_seq: &[u8; N2],
@@ -71,7 +71,7 @@ impl Parser {
 #[cfg(test)]
 mod parsertests {
 
-    use super::Parser;
+    use super::Streamer;
     use axum::body::Bytes;
     use futures::stream;
 
@@ -85,7 +85,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -107,7 +107,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -129,7 +129,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -154,7 +154,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -177,7 +177,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected = r#"[{"abc":1},{"😤👿😳😀😡😀💩🥰😋😳🤣":"hah"},{"gg":"c"},"skyscrape": {}]"#;
@@ -199,7 +199,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -223,7 +223,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
@@ -246,7 +246,7 @@ mod parsertests {
         let start_seq = br#""results":"#;
         let end_seq = br#","skyscraper":"#;
 
-        let result = Parser::from_stream(stream, start_seq, end_seq)
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
             .await
             .unwrap();
         let expected =
