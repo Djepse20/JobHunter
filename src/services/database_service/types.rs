@@ -16,23 +16,29 @@ pub struct Job {
     pub last_date: Option<DateTime<Utc>>,
 
     pub company_info: CompanyInfo,
-    pub job_tags: Vec<JobTag>,
+    pub locations: Vec<Location>,
+
     pub contact_info: Option<ContactInfo>,
 }
 
 pub struct JobTag {
-    pub name: String,
+    pub name: &'static str,
 }
 
 pub struct JobInfo {
-    pub job_url: String,
-    pub title: String,
-    pub description: String,
+    pub job_url: JobUrl,
+    pub title: Title,
+    pub description: Description,
+    pub job_tags: Vec<JobTag>,
 }
+
+pub struct JobUrl(pub String);
+pub struct Title(pub String);
+pub struct Description(pub String);
 
 pub struct CompanyInfo {
     pub name: String,
-    pub locations: Vec<Location>,
+    pub logo_url: String,
 }
 
 pub struct Location {
