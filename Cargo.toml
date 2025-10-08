@@ -26,8 +26,8 @@ tokio-stream = "0.1.17"
 tokio-util = "0.7.16"
 url = "2.5.4"
 async-compression = { version = "0.4.27", features = ["gzip", "tokio"] }
-rkyv = "0.8.11"
 memchr = "2.7.6"
+mockito = "1.7.0"
 
 [patch.crates-io]
 serde_json = {path="json"}

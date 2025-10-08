@@ -5,7 +5,7 @@ pub(super) mod de;
 pub mod jobs;
 pub mod streamer;
 use futures::{
-    StreamExt,
+    Stream, StreamExt,
     stream::{self, FuturesUnordered},
 };
 
@@ -107,6 +107,10 @@ where
     Self: Sized,
 {
     type Error;
-    type Output;
-    async fn create_query(val: From) -> Result<Self::Output, Self::Error>;
+    type Item;
+    type Output<S: StreamExt<Item = Self::Item>>;
+    async fn create_query(
+        &self,
+        val: From,
+    ) -> Result<Self::Output<impl StreamExt<Item = Self::Item>>, Self::Error>;
 }
