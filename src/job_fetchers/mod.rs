@@ -94,21 +94,13 @@ pub trait JobFetcher {
     }
 }
 
-pub trait FromIntermediate<I>
-where
-    Self: Sized,
-{
-    type Error;
-    async fn from_intermediate(val: I) -> Result<Self, Self::Error>;
-}
-
 pub trait FromQuery<From>
 where
     Self: Sized,
 {
     type Error;
     type Item;
-    type Output<S: StreamExt<Item = Self::Item>>;
+    type Output<S>;
     async fn create_query(
         &self,
         val: From,

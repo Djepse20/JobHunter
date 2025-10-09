@@ -2,7 +2,7 @@ use futures::{StreamExt, stream};
 use serde_json::Value;
 
 use crate::{
-    job_fetchers::{FromQuery, job_index::fetcher::JobIndex},
+    job_fetchers::{FromQuery, job_index::fetcher::JobIndex, streamer},
     util::options::{FetchOptions, QueryOptions, SizeOptions},
 };
 
@@ -17,7 +17,7 @@ impl AsRef<str> for JobIndexQuery {
 impl FromQuery<&QueryOptions> for JobIndex {
     type Error = ();
     type Item = (Arc<str>, Arc<str>);
-    type Output<S: StreamExt<Item = Self::Item>> = S;
+    type Output<S> = S;
 
     async fn create_query(
         &self,
@@ -62,15 +62,13 @@ impl JobIndex {
             .append_pair("limit", "1")
             .finish();
         let res = reqwest::get(url.as_str()).await.ok()?;
-        let json = res.text().await.ok()?;
-        //TODO FIX
-        let value: serde_json::Value = serde_json::from_str(&json).ok()?;
-        let list = value.get("geoareaid")?.get("completions")?;
-        let job = list.get(0)?;
+        let json = res
+            .bytes_stream()
+            .then(async |bytes| bytes.map_err(Box::new));
+        let uuid =
+            streamer::Streamer::get_seq_in_stream(json, b"id\":", b",").await?;
 
-        let uuid = job.get("id")?.as_u64()?;
-        println!("job: {:?}", url);
-
+        let uuid: u64 = uuid.parse().ok()?;
         Some(("geoareaid".into(), uuid.to_string().into()))
     }
 }
@@ -79,7 +77,7 @@ use std::sync::Arc;
 impl FromQuery<&FetchOptions> for JobIndex {
     type Error = ();
     type Item = (usize, Arc<[(Arc<str>, Arc<str>)]>);
-    type Output<S: StreamExt<Item = Self::Item>> = (usize, S);
+    type Output<S> = (usize, S);
 
     async fn create_query(
         &self,
@@ -100,7 +98,6 @@ impl FromQuery<&FetchOptions> for JobIndex {
         };
 
         let query_with_jobs = pages_query.map(move |(jobs, page)| {
-            let query = query.clone();
             (
                 jobs,
                 ([
@@ -121,7 +118,7 @@ impl FromQuery<(Arc<[(Arc<str>, Arc<str>)]>, &SizeOptions)> for JobIndex {
 
     type Item = (usize, usize);
 
-    type Output<S: StreamExt<Item = Self::Item>> = (usize, S);
+    type Output<S> = (usize, S);
 
     async fn create_query(
         &self,

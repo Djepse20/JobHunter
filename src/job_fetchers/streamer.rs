@@ -3,15 +3,14 @@ use futures::StreamExt;
 pub(crate) struct Streamer;
 
 impl Streamer {
-    pub async fn get_seq_in_stream<S, const N1: usize, const N2: usize>(
+    pub async fn get_seq_in_stream<S, E, const N1: usize, const N2: usize>(
         stream: S,
         start_seq: &[u8; N1],
         end_seq: &[u8; N2],
     ) -> Option<String>
     where
-        S: futures::Stream<
-                Item = Result<bytes::Bytes, Box<dyn std::error::Error>>,
-            >,
+        E: std::error::Error + ?Sized,
+        S: futures::Stream<Item = Result<bytes::Bytes, Box<E>>>,
     {
         if start_seq.is_empty() || end_seq.is_empty() {
             return None;
