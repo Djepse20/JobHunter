@@ -12,10 +12,9 @@ use url::Url;
 use crate::job_fetchers::job_index::preview::JobPreview;
 use crate::job_fetchers::jobs::get_all_unique_job;
 use crate::job_fetchers::{Job, JobFetcher, streamer};
+use crate::services::database_service::database::DataBase;
+use crate::util::from_query::FromQuery;
 use crate::util::options::FetchOptions;
-use crate::{
-    job_fetchers::FromQuery, services::database_service::database::DataBase,
-};
 
 use async_compression::tokio::write::GzipDecoder;
 pub struct JobIndex {
@@ -72,13 +71,15 @@ impl JobFetcher for JobIndex {
             None => None,
         });
 
-        get_all_unique_job::<_, JobPreview<'_, JobIndex>>(
-            database,
-            (offset, pin!(jobs)),
+        Some(
+            get_all_unique_job::<JobPreview<'_, JobIndex>, _>(
+                database,
+                (offset, pin!(jobs)),
+            )
+            .await?
+            .collect()
+            .await,
         )
-        .await;
-
-        todo!()
     }
 }
 impl JobIndex {

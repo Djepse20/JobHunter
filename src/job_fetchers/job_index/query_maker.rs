@@ -1,9 +1,14 @@
 use futures::{StreamExt, stream};
+use serde::Deserialize;
 use serde_json::Value;
+use sqlx::types::JsonRawValue;
 
 use crate::{
-    job_fetchers::{FromQuery, job_index::fetcher::JobIndex, streamer},
-    util::options::{FetchOptions, QueryOptions, SizeOptions},
+    job_fetchers::{job_index::fetcher::JobIndex, streamer},
+    util::{
+        from_query::FromQuery,
+        options::{FetchOptions, QueryOptions, SizeOptions},
+    },
 };
 
 pub struct JobIndexQuery(String);
@@ -56,20 +61,36 @@ impl JobIndex {
         &self,
         job_region: &str,
     ) -> Option<(Arc<str>, Arc<str>)> {
+        #[derive(Deserialize)]
+        struct GeoLoc<'a> {
+            #[serde(borrow)]
+            geoareaid: Completions<'a>,
+        }
+        #[derive(Deserialize)]
+
+        struct Completions<'a> {
+            #[serde(borrow)]
+            completions: &'a JsonRawValue,
+        }
+        #[derive(Deserialize)]
+
+        struct Uuid {
+            id: u64,
+        }
         let mut url = self.urls.job_regions.clone();
         url.query_pairs_mut()
             .append_pair("q", job_region)
             .append_pair("limit", "1")
             .finish();
         let res = reqwest::get(url.as_str()).await.ok()?;
-        let json = res
-            .bytes_stream()
-            .then(async |bytes| bytes.map_err(Box::new));
+        let json = res.text().await.ok()?;
+        let loc: GeoLoc = serde_json::from_str(&json).ok()?;
         let uuid =
-            streamer::Streamer::get_seq_in_stream(json, b"id\":", b",").await?;
+            serde_json::Deserializer::from_str(loc.geoareaid.completions.get())
+                .into_iter_seq::<Uuid>()
+                .find_map(|uuid| uuid.ok())?;
 
-        let uuid: u64 = uuid.parse().ok()?;
-        Some(("geoareaid".into(), uuid.to_string().into()))
+        Some(("geoareaid".into(), uuid.id.to_string().into()))
     }
 }
 use std::sync::Arc;
@@ -128,6 +149,7 @@ impl FromQuery<(Arc<[(Arc<str>, Arc<str>)]>, &SizeOptions)> for JobIndex {
         let total_jobs = self.total_jobs(&query).await.ok_or(())?;
         let (offset, _, pages) =
             size_options.job_num_to_query(total_jobs, JobIndex::PAGE_SIZE, 1);
+
         Ok((offset, stream::iter(pages)))
     }
 }
@@ -154,14 +176,18 @@ impl JobIndex {
 
 #[cfg(test)]
 mod tests {
+    use futures::FutureExt;
     use serde_json::json;
-    use std::sync::{LazyLock, Mutex};
+    use std::sync::{Arc, LazyLock, Mutex};
     use tokio_stream::StreamExt;
     use url::Url;
 
     use crate::{
-        job_fetchers::{FromQuery, job_index::fetcher::JobIndex},
-        util::options::{FetchOptions, QueryOptions, SizeOptions},
+        job_fetchers::job_index::fetcher::JobIndex,
+        util::{
+            from_query::FromQuery,
+            options::{FetchOptions, QueryOptions, SizeOptions},
+        },
     };
 
     static MOCK_URL_SERVER: LazyLock<Mutex<(Url, mockito::ServerGuard)>> =
@@ -176,10 +202,28 @@ mod tests {
 
         (url, server)
     }
+    // macro_rules! mock_with_body {
+    //     ($($mock:ident = { method = $method:expr, path = $path:expr, body = body:expr }),*, test = async $test:block, server:expr) => {
+    //         $(let $(mock) = server
+    //         .mock(
+    //             $method,
+    //             $path,
+    //         )
+    //         .with_body(
+    //             $body,
+    //         )
+    //         .create();),*
+    //         tokio::runtime::Builder::new_current_thread()
+    //         .enable_all()
+    //         .build()
+    //         .unwrap()
+    //         .block_on(async $block);
+    //     };
 
+    // }
     #[test]
 
-    fn first_page() {
+    fn test_query_options() {
         let (url, server) =
             &mut *MOCK_URL_SERVER.lock().expect("should unlock");
 
@@ -188,7 +232,9 @@ mod tests {
                 "GET",
                 "/api/jobsearch/v3/autocomplete?&types=geoareaid&q=abc&limit=1",
             )
-            .with_body(r#"{"geoareaid": {"completions": [{"id":3000}]}}"#)
+            .with_body(
+                r#"{"geoareaid": {"completions": [{"id":3000,"abc":1000}]}}"#,
+            )
             .create();
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -196,23 +242,64 @@ mod tests {
             .unwrap()
             .block_on(async {
                 let job = JobIndex::new_with_base(url.clone());
-                let options = &FetchOptions {
-                    query_options: QueryOptions::Query {
-                        job_name: None,
-                        job_regions: vec!["abc".to_string()],
-                        job_tags: vec![],
-                    },
-                    size_options: SizeOptions::Page {
-                        page_size: 20,
-                        page: 3,
-                    },
+                let options = QueryOptions::Query {
+                    job_name: None,
+                    job_regions: vec!["abc".to_string()],
+                    job_tags: vec![],
                 };
-                let mut query = job.create_query(options).await;
+                let mut query =
+                    job.create_query(&options).await.expect("should unwrap");
 
-                // mock.remove();   // let query: Vec<(String, String)> =
-                // //     query.unwrap().collect().await;
+                let query: Vec<(String, String)> = query
+                    .map(|val| (val.0.to_string(), val.1.to_string()))
+                    .collect()
+                    .await;
 
-                // assert_eq!(query, [("abc".to_string(), "abc".to_string())]);
+                assert_eq!(
+                    query,
+                    [("geoareaid".to_string(), "3000".to_string())]
+                );
+            })
+    }
+
+    #[test]
+
+    fn test_size_options() {
+        let (url, server) =
+            &mut *MOCK_URL_SERVER.lock().expect("should unlock");
+
+        let mock = server
+            .mock(
+                "GET",
+                "/api/jobsearch/v3/autocomplete?&types=geoareaid&q=abc&limit=1",
+            )
+            .with_body(
+                r#"{"geoareaid": {"completions": [{"id":3000,"abc":1000}]}}"#,
+            )
+            .create();
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async {
+                let job = JobIndex::new_with_base(url.clone());
+                let options = QueryOptions::Query {
+                    job_name: None,
+                    job_regions: vec!["abc".to_string()],
+                    job_tags: vec![],
+                };
+                let mut query =
+                    job.create_query(&options).await.expect("should unwrap");
+
+                let query: Vec<(String, String)> = query
+                    .map(|val| (val.0.to_string(), val.1.to_string()))
+                    .collect()
+                    .await;
+
+                assert_eq!(
+                    query,
+                    [("geoareaid".to_string(), "3000".to_string())]
+                );
             })
     }
 }

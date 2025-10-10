@@ -7,13 +7,13 @@ use crate::{
 };
 use futures::StreamExt;
 
-pub async fn get_all_unique_job<'c, J, T>(
+pub async fn get_all_unique_job<'c, T, J>(
     database: &DataBase,
     (offset, mut job_pages): (
         usize,
         impl StreamExt<Item = (usize, String)> + Unpin,
     ),
-) -> Option<()>
+) -> Option<impl StreamExt<Item = JobPreview<J>>>
 where
     T: JobPreviews<J>,
 {
@@ -23,18 +23,7 @@ where
 
     let mut newer_jobs: Vec<JobPreview<J>> = Vec::new();
 
-    if let Some(mut new_jobs) =
-        T::unique_previews((&html, jobs_to_take, offset), &newest_job)
-    {
-        newer_jobs.append(&mut new_jobs);
-    }
-
-    while let Some((_, html)) = job_pages.next().await {
-        if let Some(mut new_jobs) =
-            T::unique_previews((&html, jobs_to_take, 0), &newest_job)
-        {
-            // newer_jobs.append(&mut new_jobs);
-        }
-    }
-    None
+    Some(job_pages.flat_map(|(_, html)| {
+        T::unique_previews((&html, jobs_to_take, 0), &newest_job)
+    }))
 }

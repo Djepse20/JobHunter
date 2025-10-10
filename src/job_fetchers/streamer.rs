@@ -22,10 +22,7 @@ impl Streamer {
         let mut output: Vec<u8> = Vec::new();
         let mut stream = std::pin::pin!(stream);
         while let Some(chunk) = stream.next().await {
-            let chunk = match chunk {
-                Ok(c) => c,
-                Err(_) => return None,
-            };
+            let chunk = chunk.ok()?;
             let bytes = chunk.as_ref();
 
             for &b in bytes.iter() {
@@ -40,7 +37,6 @@ impl Streamer {
                     if start_j == start_seq.len() {
                         started = true;
                         start_j = 0;
-                        end_j = 0;
                     }
                 } else {
                     output.push(b);
@@ -62,7 +58,6 @@ impl Streamer {
                 }
             }
         }
-
         None
     }
 }
@@ -73,6 +68,24 @@ mod parsertests {
     use super::Streamer;
     use axum::body::Bytes;
     use futures::stream;
+
+    #[tokio::test]
+    async fn works_on_job_index_example_stream() {
+        let file_str = r#"{"geoareaid": {"completions": [{"id":3000}]}}"#;
+        let stream =
+            stream::iter(vec![Ok::<Bytes, Box<dyn std::error::Error>>(
+                Bytes::from_owner(file_str),
+            )]);
+        let start_seq = br#""id":"#;
+        let end_seq = br#"}"#;
+
+        let result = Streamer::get_seq_in_stream(stream, start_seq, end_seq)
+            .await
+            .unwrap();
+        let expected = r#"3000"#;
+
+        assert_eq!(&result, &expected)
+    }
 
     #[tokio::test]
     async fn works_on_not_split_stream() {
