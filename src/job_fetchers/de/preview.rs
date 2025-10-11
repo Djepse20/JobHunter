@@ -1,19 +1,18 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
+use futures::StreamExt;
+use futures::stream;
 use serde::Deserialize;
 use serde::Deserializer;
 use std::marker::PhantomData;
 
+use crate::job_fetchers::job_index::fetcher::JobIndex;
 use crate::job_fetchers::job_index::preview::JobPreview;
 use crate::job_fetchers::job_index::preview::JobPreviews;
 use crate::services::database_service::types::Job;
-pub trait DeserializableJob {
-    const JOB_URL_ALIAS: &'static str;
-    const CREATED_AT_ALIAS: &'static str;
-
+pub trait DateFormat {
     const DATE_FORMAT: &'static str;
-    const DATE_FORMAT_SIZE: usize;
 }
-impl<J: DeserializableJob> JobPreview<'_, J> {
+impl<J: DateFormat> JobPreview<'_, J> {
     pub fn deserialize<'de, D>(
         deserializer: D,
     ) -> Result<DateTime<Utc>, D::Error>
@@ -27,7 +26,7 @@ impl<J: DeserializableJob> JobPreview<'_, J> {
     }
 }
 
-impl<'a, J: DeserializableJob> JobPreview<'a, J> {
+impl<'a, J> JobPreview<'a, J> {
     pub fn new(
         job_url: &'a str,
         date: DateTime<chrono::Utc>,
@@ -41,49 +40,77 @@ impl<'a, J: DeserializableJob> JobPreview<'a, J> {
         }
     }
 }
-impl<'de, T: DeserializableJob> Deserialize<'de> for JobPreview<'de, T> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Debug, Clone, Deserialize)]
 
-        struct Tmp<'a, T: DeserializableJob> {
+macro_rules! preview_impl {
+    (
+  struct $job:ident {
+            $(#[$job_url_meta:meta])*
             job_url: &'a str,
-            #[serde(deserialize_with = "JobPreview::<T>::deserialize")]
-            #[serde(alias = "T::")]
-            created_at: DateTime<chrono::Utc>,
-            #[serde(skip)]
-            pub _phantom: PhantomData<T>,
+            $(#[$created_at_meta:meta])*
+            created_at: chrono::DateTime<chrono::Utc>,
         }
-        let raw_value: &[u8] = <&[u8]>::deserialize(deserializer)?;
+    ) => {
+            impl<'de> TryFrom<&'de [u8]> for JobPreview<'de, $job> {
+        type Error = ();
+            fn try_from(val: &'de [u8]) -> Result<Self, Self::Error>
 
-        let tmp: Tmp<'de, T> = serde_json::from_slice(raw_value)
-            .map_err(serde::de::Error::custom)?;
+            {
+                #[derive(Debug, Clone, Deserialize)]
 
-        Ok(JobPreview {
-            job_url: tmp.job_url,
-            date: tmp.created_at,
-            full_post: raw_value,
-            _phantom: PhantomData,
-        })
-    }
+                struct Tmp<'a> {
+                    $(#[$job_url_meta])*
+                    job_url: &'a str,
+                    $(#[$created_at_meta])*
+                    created_at: DateTime<chrono::Utc>,
+                }
+
+
+
+                let tmp: Tmp<'de> = serde_json::from_slice(val)
+                    .map_err(|_|())?;
+
+                Ok(JobPreview {
+                    job_url: tmp.job_url,
+                    date: tmp.created_at,
+                    full_post: val,
+                    _phantom: PhantomData,
+                })
+            }
+        }
+    };
 }
-impl<T: DeserializableJob> JobPreviews<T> for JobPreview<'_, T> {
+
+preview_impl!(
+    struct JobIndex {
+        #[serde(rename = "T::")]
+        job_url: &'a str,
+        #[serde(deserialize_with = "JobPreview::<JobIndex>::deserialize")]
+        #[serde(rename = "haha")]
+        created_at: chrono::DateTime<chrono::Utc>,
+    }
+);
+
+impl<T> JobPreviews<T> for JobPreview<'_, T>
+where
+    for<'de> JobPreview<'de, T>: TryFrom<&'de [u8]>,
+{
     fn unique_previews<'b, 'c>(
         (json, jobs_to_take, offset): (&'c str, usize, usize),
         newest_job: &'b Job,
-    ) -> Option<Vec<JobPreview<'c, T>>> {
-        let jobs_iter = serde_json::Deserializer::from_str(json)
-            .into_iter_seq::<JobPreview<T>>()
-            .skip(offset)
-            .take(jobs_to_take)
-            .take_while(|job| match job {
-                Ok(job) => newest_job.created_at > job.date,
-                Err(_) => false,
-            })
-            .flatten();
+    ) -> Option<impl StreamExt<Item = JobPreview<'c, T>>> {
+        let jobs_iter = stream::iter(
+            serde_json::Deserializer::from_str(json)
+                .into_iter_seq::<&[u8]>()
+                .flat_map(|val| Some(JobPreview::<T>::try_from(val.ok()?)))
+                .skip(offset)
+                .take(jobs_to_take)
+                .take_while(|job| match job {
+                    Ok(job) => newest_job.created_at > job.date,
+                    Err(_) => false,
+                })
+                .flatten(),
+        );
 
-        Some(jobs_iter.collect())
+        Some(jobs_iter)
     }
 }

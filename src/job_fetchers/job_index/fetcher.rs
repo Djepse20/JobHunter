@@ -9,6 +9,7 @@ use sqlx::query;
 use tokio::io::AsyncWriteExt;
 use url::Url;
 
+use crate::job_fetchers::de::preview::DateFormat;
 use crate::job_fetchers::job_index::preview::JobPreview;
 use crate::job_fetchers::jobs::get_all_unique_job;
 use crate::job_fetchers::{Job, JobFetcher, streamer};
@@ -21,7 +22,9 @@ pub struct JobIndex {
     pub(super) client: reqwest::Client,
     pub(super) urls: JobIndexUrls,
 }
-
+impl DateFormat for JobIndex {
+    const DATE_FORMAT: &'static str = "%Y-%M-%D";
+}
 pub(super) struct JobIndexUrls {
     job_search: Url,
     pub(super) job_count: Url,
@@ -76,9 +79,7 @@ impl JobFetcher for JobIndex {
                 database,
                 (offset, pin!(jobs)),
             )
-            .await?
-            .collect()
-            .await,
+            .await?,
         )
     }
 }

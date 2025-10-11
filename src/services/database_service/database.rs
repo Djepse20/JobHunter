@@ -1,6 +1,5 @@
 use std::pin::pin;
 
-use crate::job_fetchers::de::preview::DeserializableJob;
 use crate::job_fetchers::job_index::preview::JobPreview;
 use crate::services::database_service::types::{
     CompanyInfo, ContactInfo, Job, JobTag,
@@ -22,7 +21,7 @@ impl DataBase {
     pub async fn get_newest_job(&self) -> Result<Job, sqlx::Error> {
         todo!()
     }
-    pub async fn insert_jobs<'a, T: DeserializableJob>(
+    pub async fn insert_jobs<'a, T>(
         &self,
         jobs: &[Job],
     ) -> Result<Vec<i64>, sqlx::Error> {
@@ -39,7 +38,7 @@ impl DataBase {
         Ok(job_ids)
     }
 
-    pub async fn delete_jobs<'a, T: DeserializableJob>(
+    pub async fn delete_jobs<'a, T>(
         &self,
         jobs: &[JobPreview<'a, T>],
     ) -> Result<Vec<i64>, sqlx::Error> {
@@ -56,7 +55,7 @@ impl DataBase {
         Ok(job_ids)
     }
 
-    pub async fn delete_job<'a, T: DeserializableJob>(
+    pub async fn delete_job<'a, T>(
         &self,
         jobs: &JobPreview<'a, T>,
     ) -> Result<i64, sqlx::Error> {

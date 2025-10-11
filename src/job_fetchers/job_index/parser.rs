@@ -152,8 +152,8 @@ struct JobIndexData<'a> {
     #[serde(borrow)]
     addresses: RawAddresses<'a>,
 
-    #[serde(deserialize_with = "JobPreview::<JobIndex>::deserialize")]
     #[serde(rename(deserialize = "lastdate"))]
+    #[serde(skip)]
     last_date: DateTime<Utc>,
 }
 

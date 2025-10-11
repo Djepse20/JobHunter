@@ -1,18 +1,10 @@
 use chrono::DateTime;
+use futures::StreamExt;
 
 use crate::{
-    job_fetchers::{
-        de::preview::DeserializableJob, job_index::fetcher::JobIndex,
-    },
+    job_fetchers::{de::preview::DateFormat, job_index::fetcher::JobIndex},
     services::database_service::types::Job,
 };
-
-impl DeserializableJob for JobIndex {
-    const DATE_FORMAT: &'static str = "%Y-%m-%d";
-    const DATE_FORMAT_SIZE: usize = 10;
-    const CREATED_AT_ALIAS: &'static str = "first_date";
-    const JOB_URL_ALIAS: &'static str = "job_url";
-}
 
 #[derive(Debug, Clone)]
 pub struct JobPreview<'a, J> {
@@ -26,7 +18,7 @@ pub trait JobPreviews<T> {
     fn unique_previews<'b, 'c>(
         jobs_data: (&'c str, usize, usize),
         newest_job: &'b Job,
-    ) -> Option<Vec<JobPreview<'c, T>>>;
+    ) -> Option<impl StreamExt<Item = JobPreview<'c, T>>>;
 }
 
 impl<'a, T> Eq for JobPreview<'a, T> {}
