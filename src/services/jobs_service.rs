@@ -14,6 +14,12 @@ pub struct Jobs<DB = (), T = ()> {
     job_fetchers: T,
 }
 
+impl Default for Jobs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Jobs {
     pub fn new() -> Self {
         Jobs {
@@ -25,7 +31,7 @@ impl Jobs {
 impl<T> Jobs<(), T> {
     pub fn add_database(self, database: DataBase) -> Jobs<DataBase, T> {
         Jobs {
-            database: database,
+            database,
             job_fetchers: self.job_fetchers,
         }
     }
@@ -61,9 +67,9 @@ macro_rules! fetchers {
           enum Fetchers {
             $($variant($fetcher)),*
           }
-          use crate::services::database_service::dbtypes::Job;
-          use crate::services::database_service::database::DataBase;
-          use crate::services::jobs_service::FetcherBuilder;
+          use $crate::services::database_service::dbtypes::Job;
+          use $crate::services::database_service::database::DataBase;
+          use $crate::services::jobs_service::FetcherBuilder;
           use crate::tuple_list_type;
           use crate::util::equality::TupleLength;
           use crate::services::jobs_service::AddFetcher;
@@ -92,11 +98,11 @@ macro_rules! fetchers {
 impl<const N: usize, T: JobFetcher> Jobs<DataBase, [T; N]> {
     #[allow(unused)]
     async fn fetch_jobs(&self, options: FetchOptions) -> Option<Vec<Job>> {
-        let jobs_from_sites = self
+        
+        self
             .job_fetchers
             .fetch_all_jobs_with_options_and_db(&options, Some(&self.database))
-            .await;
-        jobs_from_sites
+            .await
     }
 }
 
@@ -108,6 +114,12 @@ pub trait AddFetcher<const N: usize, J: JobFetcher, U, Markers> {
 pub struct FetcherBuilder<const N: usize, T, U> {
     jobs: [MaybeUninit<U>; N],
     fetchers: PhantomData<T>,
+}
+
+impl<const N: usize, T, U> Default for FetcherBuilder<N, T, U> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const N: usize, T, U> FetcherBuilder<N, T, U> {

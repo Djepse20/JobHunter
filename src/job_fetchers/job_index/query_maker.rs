@@ -4,9 +4,9 @@ use serde_json::Value;
 use sqlx::types::JsonRawValue;
 
 use crate::{
-    job_fetchers::{job_index::fetcher::JobIndex, streamer},
+    job_fetchers::job_index::fetcher::JobIndex,
     util::{
-        from_query::FromQuery,
+        from_query::CreateQuery,
         options::{FetchOptions, QueryOptions, SizeOptions},
     },
 };
@@ -19,7 +19,7 @@ impl AsRef<str> for JobIndexQuery {
     }
 }
 
-impl FromQuery<&QueryOptions> for JobIndex {
+impl CreateQuery<&QueryOptions> for JobIndex {
     type Error = ();
     type Item = (Arc<str>, Arc<str>);
     type Output<S> = S;
@@ -34,7 +34,7 @@ impl FromQuery<&QueryOptions> for JobIndex {
                 job_name,
                 job_regions,
                 ..
-            } => Ok(self.get_region_query(&job_regions).await.chain(
+            } => Ok(self.get_region_query(job_regions).await.chain(
                 stream::once(async {
                     job_name.as_ref().map(|job_name| {
                         ("q".into(), job_name.to_owned().into())
@@ -55,7 +55,7 @@ impl JobIndex {
         let regions = regions.iter();
 
         futures::stream::iter(regions)
-            .filter_map(async |region| self.take_first_region(&region).await)
+            .filter_map(async |region| self.take_first_region(region).await)
     }
     pub async fn take_first_region(
         &self,
@@ -95,7 +95,7 @@ impl JobIndex {
 }
 use std::sync::Arc;
 
-impl FromQuery<&FetchOptions> for JobIndex {
+impl CreateQuery<&FetchOptions> for JobIndex {
     type Error = ();
     type Item = (usize, Arc<[(Arc<str>, Arc<str>)]>);
     type Output<S> = (usize, S);
@@ -134,7 +134,7 @@ impl FromQuery<&FetchOptions> for JobIndex {
     }
 }
 
-impl FromQuery<(Arc<[(Arc<str>, Arc<str>)]>, &SizeOptions)> for JobIndex {
+impl CreateQuery<(Arc<[(Arc<str>, Arc<str>)]>, &SizeOptions)> for JobIndex {
     type Error = ();
 
     type Item = (usize, usize);
@@ -185,7 +185,7 @@ mod tests {
     use crate::{
         job_fetchers::job_index::fetcher::JobIndex,
         util::{
-            from_query::FromQuery,
+            from_query::CreateQuery,
             options::{FetchOptions, QueryOptions, SizeOptions},
         },
     };

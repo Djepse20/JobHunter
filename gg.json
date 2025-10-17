@@ -1,0 +1,790 @@
+{
+    "pageProps": {
+        "path": "7c4aea0e",
+        "product": {
+            "__typename": "Product",
+            "id": "7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f",
+            "shortId": "7c4aea0e",
+            "name": "Lethʼs helstegt pattegris med klassisk tilbehør",
+            "shortName": "Lethʼs Helstegt Pattegris",
+            "active": true,
+            "tagsList": [
+                "Helstegt Pattegris",
+                "Dansk"
+            ],
+            "description": {
+                "__typename": "ProductDescription",
+                "body": "<p>Planlægger du en fest? Så er vores festmåltid med Helstegt Pattegris den ultimative crowd-pleaser! Vi sørger for at stege grisen på forhånd og ankommer ca. 30 minutter før det er tid til at spise.</p><p>Det beder vi dig venligst sørge for:</p><ul><li>To borde til buffet</li><li>Bord til udskæring af grisen</li><li>Tagtøj til salat og kartofler</li><li>Adgang til vand og toilet</li></ul>"
+            },
+            "portrait": null,
+            "groups": [
+                {
+                    "__typename": "ProductGroup",
+                    "id": "96cce163-b35c-4674-b523-9af4917292d0",
+                    "category": {
+                        "__typename": "ProductGroupCategory",
+                        "name": "Pattegris",
+                        "id": "04037461-39ff-4cb4-be49-6fb1453aef9b"
+                    }
+                }
+            ],
+            "collection": {
+                "__typename": "Collection",
+                "description": {
+                    "__typename": "CollectionDescription",
+                    "body": "<p>Når dit næste arrangement, skal være Leth som en leg.</p><p>Lad os stå for din næste grillfest eller lej en pølsevogn til rejsegilde, indvielse, reception, barnedåb eller fødselsdag.</p>",
+                    "image": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/content/61baa004-9b62-418b-b2c3-b7eddd357811.jpeg"
+                },
+                "catering": {
+                    "__typename": "CollectionCatering",
+                    "minCancellationDays": 7,
+                    "link": {
+                        "__typename": "CollectionCateringLink",
+                        "inspectionReport": "https://www.findsmiley.dk/794855"
+                    }
+                },
+                "fee": {
+                    "__typename": "CollectionFee",
+                    "pct": 15
+                },
+                "location": {
+                    "__typename": "Location",
+                    "postalCode": "8700",
+                    "locality": "Horsens",
+                    "route": "Egernvej 1",
+                    "latitude": 55.8738359,
+                    "longitude": 9.8272184
+                },
+                "questions": [],
+                "frozen": false,
+                "id": "b94e1608-7063-4e6e-83f3-b8ca860a9c05",
+                "slug": "leth-catering",
+                "title": "Leth Catering",
+                "featured": false,
+                "reviewStats": {
+                    "__typename": "CollectionReviewStats",
+                    "total": 67,
+                    "average": 4.6,
+                    "hasFiveStarReview": true
+                }
+            },
+            "questions": [
+                {
+                    "__typename": "ProductQuestions",
+                    "category": {
+                        "__typename": "ProductQuestionCategory",
+                        "id": "ddf574ef-1e32-4ca8-8f71-9396b9f4bce1",
+                        "title": "Mad og servering",
+                        "order": 1
+                    },
+                    "data": [
+                        {
+                            "__typename": "ProductQuestion",
+                            "id": "58d019ad-e214-4b4d-8024-8c6f379ff0e5",
+                            "order": 0,
+                            "title": "Er der noget jeg skal sørge for?",
+                            "response": {
+                                "__typename": "RichTextField",
+                                "body": "<p>Vi beder dig sørge for:</p><ul><li>To borde til buffet</li><li>Bord til udskæring af grisen</li><li>Tagtøj til salat og kartofler</li><li>Adgang til vand og toilet</li></ul>"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "images": [
+                {
+                    "__typename": "ProductImage",
+                    "id": "2f389839-0b0f-42fd-bba8-1a113461ba24",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/2f389839-0b0f-42fd-bba8-1a113461ba24.jpeg",
+                    "order": 0,
+                    "mime": "image/jpeg"
+                },
+                {
+                    "__typename": "ProductImage",
+                    "id": "100fbff6-e15e-40ea-9978-ac60925165cf",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/100fbff6-e15e-40ea-9978-ac60925165cf.jpeg",
+                    "order": 1,
+                    "mime": "image/jpeg"
+                },
+                {
+                    "__typename": "ProductImage",
+                    "id": "77500558-5c69-46c0-907a-6395f19ff529",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/77500558-5c69-46c0-907a-6395f19ff529.jpeg",
+                    "order": 2,
+                    "mime": "image/jpeg"
+                },
+                {
+                    "__typename": "ProductImage",
+                    "id": "6046022d-6a99-4f7d-1214-b1558dbbea35",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/6046022d-6a99-4f7d-1214-b1558dbbea35.jpeg",
+                    "order": 3,
+                    "mime": "image/jpeg"
+                },
+                {
+                    "__typename": "ProductImage",
+                    "id": "69e74692-df90-4c4a-1fc6-6ab4c50f7f24",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/69e74692-df90-4c4a-1fc6-6ab4c50f7f24.jpeg",
+                    "order": 4,
+                    "mime": "image/jpeg"
+                },
+                {
+                    "__typename": "ProductImage",
+                    "id": "564b3cf7-cd80-4164-bb2b-3e788803f662",
+                    "url": "https://ik.imagekit.io/nuento/collections/listings/b94e1608-7063-4e6e-83f3-b8ca860a9c05/products/7c4aea0e-dd5f-4ff3-948d-48e1877a2a0f/564b3cf7-cd80-4164-bb2b-3e788803f662.jpeg",
+                    "order": 5,
+                    "mime": "image/jpeg"
+                }
+            ],
+            "videos": [],
+            "modifiers": [
+                {
+                    "__typename": "ProductModifier",
+                    "id": "b1bc2cdb-eb3c-4176-ae1c-23da4ec4aae8",
+                    "order": 0,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "8f7d36b9-9897-4fa2-887b-a9d7bb8cf226",
+                        "name": "Personale",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "7f2bca6a-e5fc-4eaa-aed0-fc203e430c4d",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "e35ac5eb-2c32-4c3f-a7b2-b0aae5af8cc1",
+                                    "shortId": "e35ac5eb",
+                                    "name": "Grillmester",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p><span style=\"color: rgb(35, 35, 37);\">Vi sørger for at stege grisen på forhånd og ankommer ca. 30 minutter før det er tid til at spise.</span></p><p><span style=\"color: rgb(35, 35, 37);\">Vi tager os af udskæringen og holder buffeten kørende, så du kan fokusere på at have det sjovt med dine gæster. Når alle har fået et par omgange, sørger vi for at skære resten af grisen op til jer. Derefter pakker vi sammen og siger tak for i aften.</span></p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "a8c5a210-4d0f-43af-a83b-611a41049287",
+                    "order": 1,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "a7ff105c-66b0-40db-a398-634b5425aa24",
+                        "name": "Forretter",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": "<p>Ønsker I forret inden I skal spise helstegt?</p>"
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "a2704af0-e5ac-453e-acc4-e3fd594a4ade",
+                                "price": 4500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "2ae0b32a-9f3a-43b4-8798-37ed29286153",
+                                    "shortId": "2ae0b32a",
+                                    "name": "Rejecocktail",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p>Den klassiske danske forret. Serveres med brød og smør.</p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "9e71b7b4-e95d-46ae-9588-98524a0b697b",
+                                "price": 4500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 1,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "74652869-0510-434a-9117-a18b7c0b300d",
+                                    "shortId": "74652869",
+                                    "name": "Tarteletter",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p>Lækre tarteletter med hjemmelavet høns i asparges.</p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "0229bf8a-1787-4b12-ac5d-a5a4daec05d6",
+                                "price": 4500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 2,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "8ad920cc-ba59-424f-bf46-4efead55e369",
+                                    "shortId": "8ad920cc",
+                                    "name": "Tunmousse",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p>Tunmousse anrettet på rucolasalat og pyntet med rejer, asparges og små cherrytomater.</p><p>Serveres med brød og smør.</p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "a5952160-9d8b-4bfe-bb62-41e53ae59552",
+                    "order": 2,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "052067be-b217-4a83-9eee-edcbc0f44b12",
+                        "name": "Kød",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "8fd321a9-afc5-4ef7-b344-1b60e8443c1f",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "399601a0-be67-4680-9f88-007019f7a02d",
+                                    "shortId": "399601a0",
+                                    "name": "Leth's Helstegt Pattegris",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p>Sprød og saftig helstegt pattegris.</p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "3a476145-cc22-48e7-bf4b-7eaacef0ee44",
+                    "order": 3,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "4be813ff-ba90-4528-9795-a72226bb895b",
+                        "name": "Kartofler",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "07a3434a-d668-495c-b851-f44cc4a0775a",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "fe5df213-d712-4b99-aeb5-eed163c63260",
+                                    "shortId": "fe5df213",
+                                    "name": "Flødekartofler",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "ef2ed19b-9b83-4954-9d85-e3dccb23b2c3",
+                                "price": 1500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 1,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "9ab8f5b7-f10b-43c0-942f-f894a2b9d5af",
+                                    "shortId": "9ab8f5b7",
+                                    "name": "Små Kartofler m. Bearnaisecreme",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "4a8a4759-a9e8-48b8-8df7-e800b200c4e5",
+                    "order": 4,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "a077f6ce-573f-470e-b535-1b2a72a10653",
+                        "name": "Saucer",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "779509ff-d635-4f54-b7b3-3ddb5e778156",
+                                "price": 1500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "58bef04a-6f8d-4706-b561-5fce669e8f6c",
+                                    "shortId": "58bef04a",
+                                    "name": "Bearnaise Sauce",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "e10a5782-ab39-458c-86db-6acbbec3a413",
+                                "price": 1500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 1,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "7d4ddfd0-93cc-4343-891a-f4176f92dd61",
+                                    "shortId": "7d4ddfd0",
+                                    "name": "Brun Sauce",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "3d62159d-0200-4a09-81db-537935c028f9",
+                                "price": 1500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 2,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "7baedc9e-7b71-410f-bd24-f5f120ac6d30",
+                                    "shortId": "7baedc9e",
+                                    "name": "Peber Sauce",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "7a95a019-d15b-4720-a5c1-19cf2e28d95a",
+                    "order": 5,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "1f464bd3-32d2-4f4c-9085-87f659ff4a2f",
+                        "name": "Salater",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "0b7b3f08-eb56-4f61-9955-1faef22cc395",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "2862ef20-374f-4599-be09-85122e7a66e0",
+                                    "shortId": "2862ef20",
+                                    "name": "Grøn Salat",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p><span style=\"color: rgb(35, 35, 37);\">Blandet Salat med Agurk, Majs, Ærter, Gulerødder, Feta, Oliven, Peberfrugt, Iceberg, Brødcroutoner og Rosiner. Ved siden af serveres: Ananas, Tomater og Små Syltede Hvidløg</span></p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "c5b170ef-316c-4f93-a7b8-b98b7e9c4737",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 1,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "1c2cc4ca-6896-4570-af08-dfd6ebba254f",
+                                    "shortId": "1c2cc4ca",
+                                    "name": "Pastasalat",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "4d66b1a1-556a-43f9-adc5-d0d2d4ba6fab",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 2,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "00ddda47-f47a-4c95-b7c1-3eb69fb6a7d3",
+                                    "shortId": "00ddda47",
+                                    "name": "Klassisk Broccollisalat",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p><span style=\"color: rgb(35, 35, 37);\">Connie's hjemmelavede opskrift. Verdens bedste!</span></p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "3f4fd2b6-0871-44fd-81c1-cb6a2a7906bc",
+                    "order": 6,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "4288eef9-e751-4bf6-bd96-63e8097b1034",
+                        "name": "Brød & Tilbehør",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": ""
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "32f988d9-67d7-4594-9ca1-2fbb4f27f6ce",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "fc572bfd-7c5a-4681-a8a8-a57dd345bd37",
+                                    "shortId": "fc572bfd",
+                                    "name": "Flutes",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "8ab729bb-bb3a-4dd9-9a0a-4141f2d28e63",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 1,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "20856087-0ea6-4de1-a78c-387fafa9f5de",
+                                    "shortId": "20856087",
+                                    "name": "Smør",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "330a0844-8070-4c72-a1fa-ad373e0b5593",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 2,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "0da8aca6-be34-43ec-ae96-40787a08e78f",
+                                    "shortId": "0da8aca6",
+                                    "name": "Hjemmelavet Hvidløgssmør",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            },
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "9ae8605b-6108-4d55-b268-1a5fa77c59ec",
+                                "price": 0,
+                                "quantity": 1,
+                                "mandatory": true,
+                                "order": 3,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "c9412db8-e672-42ca-a9f9-e0daefd247c4",
+                                    "shortId": "c9412db8",
+                                    "name": "Dressing",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": ""
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "__typename": "ProductModifier",
+                    "id": "ccb91f77-6c4b-41bd-820b-746b7118ea7d",
+                    "order": 7,
+                    "group": {
+                        "__typename": "ProductModifierGroup",
+                        "id": "511a8d61-6b8b-4093-9a31-ee3338dad31b",
+                        "name": "Dessert",
+                        "quantifiable": false,
+                        "isMultipliable": true,
+                        "minPermitted": null,
+                        "maxPermitted": null,
+                        "description": {
+                            "__typename": "RichTextField",
+                            "body": "<p>Noget lækkert til at slutte på?</p>"
+                        },
+                        "options": [
+                            {
+                                "__typename": "ProductModifierOption",
+                                "id": "fbcea6cb-aab1-4e99-8850-51bae85e3d63",
+                                "price": 2500,
+                                "quantity": 0,
+                                "mandatory": false,
+                                "order": 0,
+                                "product": {
+                                    "__typename": "Product",
+                                    "id": "30a5f65f-311b-4536-9838-5b24c85fe0e2",
+                                    "shortId": "30a5f65f",
+                                    "name": "Chokoladekage",
+                                    "description": {
+                                        "__typename": "ProductDescription",
+                                        "body": "<p>Chokoladekage med hjemmelavet vaniljecreme.</p>"
+                                    },
+                                    "price": 0,
+                                    "minQuantity": 1,
+                                    "maxQuantity": 10000,
+                                    "type": {
+                                        "__typename": "ProductType",
+                                        "singularForm": "kuvert",
+                                        "pluralForm": "kuverter"
+                                    },
+                                    "images": []
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "__N_SSG": true
+}

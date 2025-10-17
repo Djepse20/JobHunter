@@ -1,11 +1,9 @@
 pub mod job_index;
 
-pub(super) mod de;
-
 pub mod jobs;
-pub mod streamer;
+pub mod preview;
 use futures::{
-    Stream, StreamExt,
+    StreamExt,
     stream::{self, FuturesUnordered},
 };
 
@@ -14,7 +12,7 @@ use crate::{
     util::options::FetchOptions,
 };
 
-pub const JOB_TAGS: &'static [(&'static str, &'static [&'static str])] = &[
+pub const JOB_TAGS: &[(&str, &[&str])] = &[
     ("C#", &["c#", "c-sharp", "c sharp", "csharp"]),
     ("Python", &["python"]),
     ("Rust", &["rust"]),
@@ -67,10 +65,10 @@ impl<const N: usize, J: JobFetcher> JobFetcher for [J; N] {
             FuturesUnordered::from_iter(self.iter().map(|job_fetcher| {
                 // returns Future<Output = Option<Vec<Job>>>
                 job_fetcher
-                    .fetch_all_jobs_with_options_and_db(&options, database)
+                    .fetch_all_jobs_with_options_and_db(options, database)
             }))
             .filter_map(|opt_vec| async move { opt_vec }) // drop None, produce Vec<Job>
-            .flat_map(|vec_jobs| stream::iter(vec_jobs));
+            .flat_map(stream::iter);
         async { Some(jobs_stream.collect().await) }
     }
 }

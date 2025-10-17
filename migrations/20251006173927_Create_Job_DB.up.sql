@@ -1,7 +1,7 @@
 -- Add up migration script here
-CREATE TABLE company_info (
+CREATE TABLE company (
     id bigint PRIMARY KEY,
-    name varchar(255),
+    name varchar(255) UNIQUE,
     logo_url varchar(1000)
 );
 
@@ -9,16 +9,16 @@ CREATE Table job (
     id bigserial PRIMARY KEY,
     title varchar(255),
     description text,
-    job_url text,
+    job_url text UNIQUE,
     company_id bigint,
     CONSTRAINT company_info_fk FOREIGN KEY (company_id)
-    REFERENCES company_info(id)
+    REFERENCES company(id)
 
 );
 
 CREATE TABLE job_tag (
     id bigserial PRIMARY KEY,
-    tag varchar(255)
+    tag varchar(255) UNIQUE
 );
 
 
@@ -37,9 +37,10 @@ CREATE TABLE tags_for_job (
 
 CREATE TABLE job_location (
     id bigserial PRIMARY KEY,
-    name varchar(255),
-    geo_location point
-
+    address varchar(255),
+    x double precision,
+    y double precision,
+    UNIQUE (x, y)
 );
 CREATE TABLE location_for_job (
     job_id bigint,

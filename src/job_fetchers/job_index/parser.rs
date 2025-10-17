@@ -1,23 +1,19 @@
-use core::error;
-
 use chrono::{DateTime, Utc};
 use memchr::memmem;
 use serde::Deserialize;
+use serde::de::Error;
 
+use crate::job_fetchers::preview::{JobPreview, parse_date};
 use crate::{
-    job_fetchers::{
-        JOB_TAGS, job_index::fetcher::JobIndex, job_index::preview::JobPreview,
-    },
+    job_fetchers::{JOB_TAGS, job_index::fetcher::JobIndex},
     services::database_service::types::{
         CompanyInfo, Description, Job, JobInfo, JobTag, JobUrl, Location, Title,
     },
 };
 
-#[derive(Debug, Deserialize)]
-#[serde(transparent)]
-pub struct RawHtml<'a>(#[serde(borrow)] &'a RawValue);
+pub struct JobIndexHtmlInfo((Vec<JobTag>, Description));
 
-impl<'a> RawHtml<'a> {
+impl JobIndexHtmlInfo {
     fn extract_jobs_tags(description: &str) -> Vec<JobTag> {
         JOB_TAGS
             .iter()
@@ -33,34 +29,37 @@ impl<'a> RawHtml<'a> {
     }
 }
 
-impl<'a> TryFrom<RawHtml<'a>> for (Vec<JobTag>, Description) {
-    type Error = ();
-    fn try_from(value: RawHtml<'a>) -> Result<Self, Self::Error> {
-        let start_seq = "</div>\\n\\n<p>";
-        let end_seq = "</p>\\n";
-        let string = value.0.get();
+impl<'de> Deserialize<'de> for JobIndexHtmlInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let start_seq = b"</div>\\n\\n<p>";
+        let end_seq = b"</p>\\n";
+        let string = <&str>::deserialize(deserializer)?;
 
-        let start_idx = string.find(start_seq).ok_or(())? + start_seq.len();
+        let start_idx = memmem::find(string.as_bytes(), start_seq)
+            .ok_or(serde::de::Error::custom("start seq dosent exist"))?
+            + start_seq.len();
 
-        let end_idx = string.find(end_seq).ok_or(())?;
+        let end_idx = memmem::find(string.as_bytes(), end_seq)
+            .ok_or(serde::de::Error::custom("start seq dosent exist"))?;
 
         let description: String = string[start_idx..end_idx]
             .split("<p>")
             .flat_map(|x| x.split("</p>"))
             .filter(|x| !x.is_empty())
             .collect();
-        Ok((
-            RawHtml::extract_jobs_tags(&description),
+        Ok(JobIndexHtmlInfo((
+            JobIndexHtmlInfo::extract_jobs_tags(&description),
             Description(description),
-        ))
+        )))
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(transparent)]
-struct RawAddresses<'a>(#[serde(borrow)] &'a RawValue);
+struct JobIndexLocation(Vec<Location>);
 
-impl<'a> RawAddresses<'a> {
+impl JobIndexLocation {
     fn deserialize_location<'de, D>(
         deserializer: D,
     ) -> Result<(f64, f64), D::Error>
@@ -77,97 +76,132 @@ impl<'a> RawAddresses<'a> {
         Ok((s.latitude, s.longitude))
     }
 }
-impl<'a> TryFrom<RawAddresses<'a>> for Vec<Location> {
-    type Error = ();
-    fn try_from(value: RawAddresses<'a>) -> Result<Self, Self::Error> {
+impl<'de> Deserialize<'de> for JobIndexLocation {
+    fn deserialize<D>(mut deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
         #[derive(Deserialize)]
         struct Addresses<'a> {
             city: &'a str,
-            #[serde(deserialize_with = "RawAddresses::deserialize_location")]
+            #[serde(
+                deserialize_with = "JobIndexLocation::deserialize_location"
+            )]
             coordinates: (f64, f64),
             #[serde(rename(deserialize = "simple_string"))]
             address: &'a str,
             #[serde(rename(deserialize = "zipcode"))]
             zip_code: &'a str,
         }
-        Ok(serde_json::Deserializer::from_str(value.0.get())
-            .into_iter_seq::<Addresses>()
-            .filter_map(|loc| {
-                loc.ok().map(|loc| Location {
+
+        Ok(JobIndexLocation(
+            Vec::<Addresses>::deserialize(deserializer)?
+                .into_iter()
+                .map(|loc| Location {
                     address: loc.address.to_owned(),
                     geo_location: loc.coordinates,
                 })
-            })
-            .collect())
+                .collect(),
+        ))
     }
 }
-#[derive(Debug, Deserialize)]
-#[serde(transparent)]
-struct RawCompany<'a>(#[serde(borrow)] &'a RawValue);
-impl<'a> TryFrom<RawCompany<'a>> for CompanyInfo {
-    type Error = ();
+struct JobIndexCompany(CompanyInfo);
 
-    fn try_from(value: RawCompany<'a>) -> Result<Self, Self::Error> {
+impl<'de> Deserialize<'de> for JobIndexCompany {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
         #[derive(Deserialize)]
         struct Company {
             name: String,
             get_logo_company: String,
         }
-        let company_info: Company =
-            serde_json::from_str(value.0.get()).map_err(|_| ())?;
-        Ok(CompanyInfo {
+        let company_info: Company = Company::deserialize(deserializer)?;
+        Ok(JobIndexCompany(CompanyInfo {
             name: company_info.name,
             logo_url: company_info.get_logo_company,
-        })
+        }))
     }
 }
-#[derive(Debug, Deserialize)]
-struct RawHeadlineAndUrl<'a> {
-    #[serde(borrow)]
-    url: &'a RawValue,
-    #[serde(borrow)]
-    headline: &'a RawValue,
+struct JobIndexJobUrl(JobUrl);
+impl<'de> Deserialize<'de> for JobIndexJobUrl {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let job_url: String = String::deserialize(deserializer)?;
+        Ok(JobIndexJobUrl(JobUrl(job_url)))
+    }
 }
 
-impl<'a> TryFrom<RawHeadlineAndUrl<'a>> for (JobUrl, Title) {
-    type Error = ();
+struct JobIndexTitle(Title);
+impl<'de> Deserialize<'de> for JobIndexTitle {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let title: String = String::deserialize(deserializer)?;
+        Ok(JobIndexTitle(Title(title)))
+    }
+}
 
-    fn try_from(value: RawHeadlineAndUrl<'a>) -> Result<Self, Self::Error> {
-        Ok((
-            JobUrl(value.url.get().to_owned()),
-            Title(value.headline.get().to_owned()),
+struct JobIndexDate(DateTime<Utc>);
+
+impl<'de> Deserialize<'de> for JobIndexDate {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let date = <&str>::deserialize(deserializer)?;
+        Ok(JobIndexDate(
+            parse_date::<JobIndex>(date).map_err(serde::de::Error::custom)?,
         ))
     }
 }
 
-use serde_json::value::RawValue;
 #[derive(Deserialize)]
-struct JobIndexData<'a> {
-    #[serde(borrow)]
-    html: RawHtml<'a>,
-    #[serde(borrow)]
-    company: RawCompany<'a>,
-    #[serde(borrow, deserialize_with = "RawHeadlineAndUrl::deserialize")]
-    headline_and_url: RawHeadlineAndUrl<'a>,
-    #[serde(borrow)]
-    addresses: RawAddresses<'a>,
+struct JobIndexData {
+    html: JobIndexHtmlInfo,
+    company: JobIndexCompany,
+    title: JobIndexTitle,
+    job_url: JobIndexJobUrl,
 
+    #[serde(rename(deserialize = "addresses"))]
+    locations: JobIndexLocation,
     #[serde(rename(deserialize = "lastdate"))]
-    #[serde(skip)]
-    last_date: DateTime<Utc>,
+    last_date: JobIndexDate,
+}
+
+impl<'de> TryFrom<&'de [u8]> for JobPreview<'de, JobIndex> {
+    type Error = ();
+    fn try_from(full_post: &'de [u8]) -> Result<Self, Self::Error> {
+        #[derive(Deserialize)]
+
+        struct Tmp<'a> {
+            job_url: &'a str,
+            created_at: JobIndexDate,
+        }
+
+        let Tmp {
+            job_url,
+            created_at: JobIndexDate(date),
+        } = serde_json::from_slice(full_post).map_err(|_| ())?;
+        Ok(JobPreview::new(job_url, date, full_post))
+    }
 }
 
 impl<'a> TryFrom<JobPreview<'a, JobIndex>> for Job {
     type Error = ();
     fn try_from(value: JobPreview<'a, JobIndex>) -> Result<Self, Self::Error> {
-        let job_index: JobIndexData =
-            serde_json::from_slice(value.full_post).map_err(|_| ())?;
-        let (job_tags, description) = job_index.html.try_into()?;
-        let (job_url, title) = job_index.headline_and_url.try_into()?;
-
-        let locations: Vec<Location> = job_index.addresses.try_into()?;
-
-        let company_info: CompanyInfo = job_index.company.try_into()?;
+        let JobIndexData {
+            html: JobIndexHtmlInfo((job_tags, description)),
+            company: JobIndexCompany(company_info),
+            title: JobIndexTitle(title),
+            job_url: JobIndexJobUrl(job_url),
+            locations: JobIndexLocation(locations),
+            last_date: JobIndexDate(last_date),
+        } = serde_json::from_slice(value.full_post).map_err(|_| ())?;
 
         Ok(Job {
             job_info: JobInfo {
@@ -177,7 +211,7 @@ impl<'a> TryFrom<JobPreview<'a, JobIndex>> for Job {
                 job_tags,
             },
             created_at: value.date,
-            last_date: Some(job_index.last_date),
+            last_date: Some(last_date),
             company_info,
             locations,
             contact_info: None,

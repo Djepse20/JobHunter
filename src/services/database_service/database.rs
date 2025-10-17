@@ -1,8 +1,8 @@
 use std::pin::pin;
 
-use crate::job_fetchers::job_index::preview::JobPreview;
+use crate::job_fetchers::preview::JobPreview;
 use crate::services::database_service::types::{
-    CompanyInfo, ContactInfo, Job, JobTag,
+    CompanyInfo, ContactInfo, Job, JobTag, JobUrl,
 };
 use futures::StreamExt;
 use sqlx::{
@@ -12,6 +12,12 @@ use sqlx::{
 #[derive(Debug, Clone)]
 pub struct DataBase {
     database: sqlx::PgPool,
+}
+
+impl Default for DataBase {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DataBase {
@@ -38,58 +44,215 @@ impl DataBase {
         Ok(job_ids)
     }
 
-    pub async fn delete_jobs<'a, T>(
-        &self,
-        jobs: &[JobPreview<'a, T>],
-    ) -> Result<Vec<i64>, sqlx::Error> {
-        let mut job_ids: Vec<i64> = Vec::with_capacity(jobs.len());
-        // these are assumed to be in the correct order. Ie if any one fails that must mean the next ones will also fail.
+    pub async fn get_jobs(&self, job_url: JobUrl) -> Result<i64, sqlx::Error> {
+        let mut tx: Transaction<'_, Postgres> = self.database.begin().await?;
 
-        for job in jobs {
-            if let Ok(id) = self.delete_job(&job).await {
-                job_ids.push(id);
-            } else {
-                break;
-            }
-        }
-        Ok(job_ids)
-    }
-
-    pub async fn delete_job<'a, T>(
-        &self,
-        jobs: &JobPreview<'a, T>,
-    ) -> Result<i64, sqlx::Error> {
+        let job = sqlx::query!(
+            "SELECT job.*, company.name, company.logo_url
+            FROM job INNER JOIN company ON 
+            job.company_id = company.id AND job.job_url= $1",
+            job_url.0
+        )
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
         todo!()
     }
+    pub async fn delete_job(&self, job: &[JobUrl]) -> Result<(), sqlx::Error> {
+        let mut tx: Transaction<'_, Postgres> = self.database.begin().await?;
+        let job_urls: Vec<String> =
+            job.into_iter().map(|job| job.0.to_owned()).collect();
+        let jobs = sqlx::query!(
+            r#"--sql
+            SELECT id FROM job
+            WHERE job_url IN (
+                SELECT UNNEST($1::text[])
+            )
+        "#,
+            &job_urls
+        )
+        .fetch_all(&mut *tx)
+        .await?;
 
+        let job_ids: Vec<i64> = jobs.into_iter().map(|job| job.id).collect();
+        let tags = sqlx::query!(
+            r#"--sql
+          DELETE FROM tags_for_job 
+          WHERE job_id in (
+            SELECT UNNEST($1::bigint[])
+          )
+          RETURNING job_tag_id
+        "#,
+            &job_ids
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
+        let locations = sqlx::query!(
+            r#"--sql
+          DELETE FROM location_for_job 
+          WHERE job_id in (
+            SELECT UNNEST($1::bigint[])
+          )
+          RETURNING location_id
+        "#,
+            &job_ids
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
+        let location_ids: Vec<i64> =
+            locations.into_iter().map(|loc| loc.location_id).collect();
+        let tag_ids: Vec<i64> =
+            tags.into_iter().map(|tag| tag.job_tag_id).collect();
+        //TODO - Implemet removal of tag ids.
+
+        let jobs = sqlx::query!(
+            r#"--sql
+            WITH deleted_jobs AS (
+            DELETE FROM job
+            WHERE job_url IN (
+                SELECT UNNEST($1::text[])
+            )
+            RETURNING company_id
+            )
+            SELECT DISTINCT company_id FROM deleted_jobs;
+        "#,
+            &job_urls
+        )
+        .fetch_all(&mut *tx)
+        .await;
+        // sqlx::query!(
+        //     r#"--sql
+        //     WITH deleted_jobs AS (
+        //     DELETE FROM job
+        //     WHERE job_url IN (
+        //         SELECT UNNEST($1::text[])
+        //     )
+        //     RETURNING id,company_id
+        //     )
+        //     SELECT DISTINCT id ,company_id FROM deleted_jobs;
+        // "#,
+        //     &job_ids,
+        //     &location_ids
+        // )
+        // .fetch_all(&mut *tx)
+        // .await;
+
+        tx.commit();
+        Ok(())
+    }
     pub async fn insert_job(&self, job: &Job) -> Result<i64, sqlx::Error> {
         let mut tx: Transaction<'_, Postgres> = self.database.begin().await?;
         // if ANY OF THESE FAIL, WE ROLL BACK :)
 
-        let company_id =
-            self.insert_company_info(&job.company_info, &mut tx).await?;
-        // let contact_id =
-        //     self.insert_contact_info(&job.contact_info, &mut tx).await?;
-        // let contact_id =
-        //     self.insert_contact_info(&job.contact_info, &mut tx).await?;
-        let job_info = &job.job_info;
-
-        let job_id: i64 = sqlx::query_scalar(
-            "INSERT INTO job_info
-        (title,description,job_url,company_id,contact_id)
-        VALUES ($1,$2,$3,$4,$5) RETURNING job_id",
+        //COMPANY
+        let company_id = sqlx::query!(
+            r#"--sql
+            INSERT INTO company (name, logo_url)
+            VALUES ($1, $2)
+            ON CONFLICT (name)
+            DO NOTHING
+            RETURNING company.id
+            "#,
+            job.company_info.name,
+            job.company_info.logo_url,
         )
-        // .bind(&job_info.title)
-        // .bind(&job_info.description)
-        // .bind(&job_info.job_url)
-        // .bind(&company_id)
         .fetch_one(&mut *tx)
+        .await?
+        .id;
+        //JOB
+        let job_id = sqlx::query!(
+            r#"--sql
+            INSERT INTO job (title, description,job_url,company_id)
+            VALUES ($1, $2,$3,$4)
+            RETURNING id
+            "#,
+            job.job_info.title.0,
+            job.job_info.description.0,
+            job.job_info.job_url.0,
+            company_id,
+        )
+        .fetch_one(&mut *tx)
+        .await?
+        .id;
+
+        //JOB TAGS
+        let job_tag_names = job
+            .job_info
+            .job_tags
+            .iter()
+            .map(|job| job.name.to_owned())
+            .collect::<Vec<String>>();
+        let job_tags = sqlx::query!(
+            r#"--sql
+            INSERT INTO job_tag (tag)
+            SELECT  UNNEST($1::varchar(255)[])
+            RETURNING job_tag.id
+            "#,
+            &job_tag_names
+        )
+        .fetch_all(&mut *tx)
         .await?;
 
-        let tag_ids =
-            self.insert_job_relations(todo!(), job_id, &mut tx).await?;
+        let job_tag_ids =
+            job_tags.into_iter().map(|j| j.id).collect::<Vec<i64>>();
+        sqlx::query!(
+            r#"--sql
+            INSERT INTO tags_for_job (job_id,job_tag_id)
+            SELECT  $1, UNNEST($2::bigint[])
+            ON CONFLICT (job_id,job_tag_id)
+            DO NOTHING
+            "#,
+            job_id,
+            &job_tag_ids,
+        )
+        .execute(&mut *tx)
+        .await?;
 
-        tx.commit().await?;
+        let (job_location_addresses, job_location_geo): (Vec<_>, Vec<_>) = job
+            .locations
+            .iter()
+            .map(|loc| (loc.address.to_owned(), loc.geo_location))
+            .unzip();
+        let (x, y): (Vec<_>, Vec<_>) = job_location_geo
+            .into_iter()
+            .map(|loc| (loc.0, loc.1))
+            .collect();
+
+        let locations = sqlx::query!(
+            r#"--sql
+            INSERT INTO job_location (address,x,y)
+            SELECT * FROM UNNEST($1::varchar(255)[], $2::double precision[], $3::double precision[])            
+            ON CONFLICT (x,y)
+            DO NOTHING
+            RETURNING id
+            "#,
+            &job_location_addresses,
+            &x,
+            &y
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
+        let location_ids = locations
+            .into_iter()
+            .map(|loc| loc.id)
+            .collect::<Vec<i64>>();
+
+        sqlx::query!(
+            r#"--sql
+            INSERT INTO location_for_job (job_id,location_id)
+            SELECT $1, UNNEST($2::bigint[])         
+            ON CONFLICT (job_id,location_id)
+            DO NOTHING
+            "#,
+            job_id,
+            &location_ids,
+        )
+        .execute(&mut *tx)
+        .await?;
+
         Ok(job_id)
 
         // self.insert_job_urls(job_id, &job.job_urls).await;
@@ -192,7 +355,7 @@ impl DataBase {
     "#,
         )
         .bind(&tags)
-        .bind(&job_id)
+        .bind(job_id)
         .fetch_all(&mut *(*tx))
         .await?;
 

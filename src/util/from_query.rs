@@ -1,6 +1,6 @@
 use futures::StreamExt;
 
-pub trait FromQuery<From>
+pub trait CreateQuery<From>
 where
     Self: Sized,
 {
