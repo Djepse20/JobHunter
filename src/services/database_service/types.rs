@@ -1,4 +1,7 @@
 pub use chrono::{DateTime, Utc};
+use sqlx::Postgres;
+
+use crate::services::database_service::DbDelete;
 
 pub struct JobApplications {
     pub applications: Vec<JobApplication>,
@@ -19,6 +22,56 @@ pub struct Job {
     pub locations: Vec<Location>,
 
     pub contact_info: Option<ContactInfo>,
+}
+impl DbDelete for Job {
+    type DeleteType<'a> = &'a [JobUrl];
+    type RetType = ();
+    async fn delete<'a, E: sqlx::Executor<'a, Database = Postgres>>(
+        executor: E,
+        jobs: Self::DeleteType<'a>,
+    ) -> Result<Self::RetType, sqlx::Error> {
+        let job_urls: Vec<String> =
+            jobs.into_iter().map(|job| job.0.to_owned()).collect();
+        let jobs = sqlx::query!(
+            r#"--sql
+            SELECT id FROM job
+            WHERE job_url IN (
+                SELECT UNNEST($1::text[])
+            )
+        "#,
+            &job_urls
+        )
+        .fetch_all(executor)
+        .await?;
+
+        // let job_ids: Vec<i64> = jobs.into_iter().map(|job| job.id).collect();
+        // let tags = sqlx::query!(
+        //     r#"--sql
+        //   DELETE FROM tags_for_job
+        //   WHERE job_id in (
+        //     SELECT UNNEST($1::bigint[])
+        //   )
+        //   RETURNING job_tag_id
+        // "#,
+        //     &job_ids
+        // )
+        // .fetch_all(executor)
+        // .await?;
+
+        // let locations = sqlx::query!(
+        //     r#"--sql
+        //   DELETE FROM location_for_job
+        //   WHERE job_id in (
+        //     SELECT UNNEST($1::bigint[])
+        //   )
+        // "#,
+        //     &job_ids
+        // )
+        // .execute(executor)
+        // .await?;
+        // Ok(())
+        Ok(())
+    }
 }
 #[derive(Debug)]
 

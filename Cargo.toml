@@ -2,8 +2,8 @@
 name = "Backend"
 version = "0.1.0"
 edition = "2024"
-
-
+[profile.dev]
+debug = false
 
 [build-dependencies]
 dotenvy = "0.15.7"

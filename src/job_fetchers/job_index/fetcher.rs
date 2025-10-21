@@ -60,7 +60,7 @@ impl JobFetcher for JobIndex {
         options: &'a FetchOptions,
         database: Option<&'a DataBase>,
     ) -> Option<Vec<Job>> {
-        let database = database?;
+        let database = database;
         let (offset, queries) = self.create_query(options).await.ok()?;
 
         let stream = queries.map(async move |(jobs, url)| {
@@ -86,7 +86,7 @@ impl UniqueJobs for JobIndex {
         jobs: &'c [u8],
         jobs_to_take: usize,
         offset: usize,
-        newest_job: &Job,
+        newest_job: Option<&Job>,
     ) -> Option<impl StreamExt<Item = JobPreview<'c, Self>>> {
         let iter = serde_json::from_slice::<Vec<&RawValue>>(jobs)
             .map(|jobs| jobs.into_iter().map(|job| job.get().as_bytes()))

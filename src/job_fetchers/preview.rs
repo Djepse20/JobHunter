@@ -73,7 +73,7 @@ where
         jobs: &'c [u8],
         jobs_to_take: usize,
         offset: usize,
-        newest_job: &Job,
+        newest_job: Option<&Job>,
     ) -> Option<impl StreamExt<Item = JobPreview<'c, Self>>>;
 }
 
@@ -81,7 +81,7 @@ pub fn unique_job<'c, T, U>(
     iter: U,
     jobs_to_take: usize,
     offset: usize,
-    newest_job: &Job,
+    newest_job: Option<&Job>,
 ) -> Option<impl StreamExt<Item = JobPreview<'c, T>>>
 where
     U: IntoIterator<Item = &'c [u8]>,
@@ -92,8 +92,10 @@ where
             .flat_map(|val| Some(JobPreview::<T>::try_from(val)))
             .skip(offset)
             .take(jobs_to_take)
-            .take_while(|job| match job {
-                Ok(job) => &*newest_job > job,
+            .take_while(move |job| match job {
+                Ok(job) => {
+                    matches!(newest_job, Some(newest_job) if newest_job > job)
+                }
                 Err(_) => false,
             })
             .flatten(),
